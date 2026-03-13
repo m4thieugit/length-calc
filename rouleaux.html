@@ -378,6 +378,11 @@ tr:hover td{background:var(--accent-light);}
           <input type="number" id="pW" value="1370" min="1">
           <div class="field-note">Largeur fixe (laize)</div>
         </div>
+        <div class="field">
+          <label>Espacement mm</label>
+          <input type="number" id="pGap" value="10" min="0">
+          <div class="field-note">Marge entre visuels</div>
+        </div>
       </div>
     </div>
     <div class="sb-sec" style="flex:1;overflow-y:auto;">
@@ -458,23 +463,23 @@ function renderSidebar(){
    stripH : hauteur max (1e9 pour mode infini)
    Retourne : { placed:[{item,x,y,w,h,rot}], notPlaced:[item], usedLen }
    ══════════════════════════════════════════════════════════════ */
-function maxRectsPass(items, stripW, stripH){
+function maxRectsPass(items, stripW, stripH, gap=0){
+  const G=gap;
   let free=[{x:0,y:0,w:stripW,h:stripH}];
   const placed=[], notPlaced=[];
 
   for(const item of items){
-    // Collect valid orientations for this item
+    const iw=item.w+G, ih=item.h+G;
+    const iwr=item.h+G, ihr=item.w+G;
     const orients=[];
-    if(item.w<=stripW && item.h<=stripH) orients.push({w:item.w,h:item.h,rot:false});
-    if(item.h<=stripW && item.w<=stripH && !(item.w===item.h))
-      orients.push({w:item.h,h:item.w,rot:true});
-    // Deduplicate (square items)
+    if(iw<=stripW && ih<=stripH) orients.push({w:iw,h:ih,rot:false});
+    if(iwr<=stripW && ihr<=stripH && !(item.w===item.h))
+      orients.push({w:iwr,h:ihr,rot:true});
     const seen=new Set();
     const uniq=orients.filter(o=>{const k=o.w+'x'+o.h;return seen.has(k)?false:(seen.add(k),true);});
 
     if(!uniq.length){notPlaced.push(item);continue;}
 
-    // Bottom-Left: find lowest-then-leftmost free rect that fits
     let bx=-1,by=-1,bOri=null;
     for(const o of uniq){
       for(const r of free){
@@ -488,21 +493,21 @@ function maxRectsPass(items, stripW, stripH){
 
     if(bOri===null){notPlaced.push(item);continue;}
 
-    const p={item,x:bx,y:by,w:bOri.w,h:bOri.h,rot:bOri.rot};
+    const realW=bOri.rot?item.h:item.w;
+    const realH=bOri.rot?item.w:item.h;
+    const p={item,x:bx,y:by,w:bOri.w,h:bOri.h,realW,realH,rot:bOri.rot};
     placed.push(p);
 
-    // Split all free rects that overlap the placed rect
     const nf=[];
     for(const r of free){
       if(!(p.x<r.x+r.w && p.x+p.w>r.x && p.y<r.y+r.h && p.y+p.h>r.y)){
-        nf.push(r); continue; // no overlap
+        nf.push(r); continue;
       }
       if(r.x<p.x)            nf.push({x:r.x,      y:r.y,      w:p.x-r.x,            h:r.h});
       if(r.x+r.w>p.x+p.w)   nf.push({x:p.x+p.w,  y:r.y,      w:r.x+r.w-p.x-p.w,   h:r.h});
       if(r.y<p.y)            nf.push({x:r.x,      y:r.y,      w:r.w,                 h:p.y-r.y});
       if(r.y+r.h>p.y+p.h)   nf.push({x:r.x,      y:p.y+p.h,  w:r.w,                 h:r.y+r.h-p.y-p.h});
     }
-    // Prune: remove rects fully contained in another
     free=nf.filter((a,i)=>!nf.some((b,j)=>i!==j&&a.x>=b.x&&a.y>=b.y&&a.x+a.w<=b.x+b.w&&a.y+a.h<=b.y+b.h)&&a.w>0&&a.h>0);
   }
 
@@ -515,10 +520,10 @@ function maxRectsPass(items, stripW, stripH){
    On essaie plusieurs ordres de tri et on garde le strip
    avec la longueur utilisée la plus courte.
    ══════════════════════════════════════════════════════════════ */
-function modeRouleau(items, stripW){
-  // Items trop larges même en rotation
-  const tooBig=items.filter(it=>Math.min(it.w,it.h)>stripW);
-  const valid =items.filter(it=>Math.min(it.w,it.h)<=stripW);
+function modeRouleau(items, stripW, gap=0){
+  // Items trop larges même en rotation (en tenant compte du gap)
+  const tooBig=items.filter(it=>Math.min(it.w,it.h)+gap>stripW);
+  const valid =items.filter(it=>Math.min(it.w,it.h)+gap<=stripW);
 
   const SORTS=[
     a=>[...a].sort((x,y)=>Math.max(y.w,y.h)-Math.max(x.w,x.h)),  // grand côté ↓
@@ -529,11 +534,10 @@ function modeRouleau(items, stripW){
 
   let best=null;
   for(const sortFn of SORTS){
-    const r=maxRectsPass(sortFn(valid), stripW, 1e9);
+    const r=maxRectsPass(sortFn(valid), stripW, 1e9, gap);
     if(!best||r.usedLen<best.usedLen) best=r;
   }
 
-  // Une seule plaque virtuelle
   return {
     plates:[{placed:best.placed, usedLen:best.usedLen, plateH:null}],
     unplaceable:tooBig
@@ -543,6 +547,7 @@ function modeRouleau(items, stripW){
 /* ── CALCULATE ── */
 function calculate(){
   const pW=parseFloat(document.getElementById('pW').value);
+  const gap=Math.max(0,parseFloat(document.getElementById('pGap').value)||0);
   if(!pW||pW<=0){alert('Largeur de laize invalide');return;}
   if(!visuels.length){alert('Ajoutez au moins un visuel');return;}
 
@@ -552,16 +557,16 @@ function calculate(){
       allItems.push({vId:v.id,w:v.w,h:v.h,colorIdx:v.colorIdx,name:v.name,idx:i});
   });
 
-  const result=modeRouleau(allItems, pW);
-  lastResult={plates:result.plates, unplaceable:result.unplaceable, pW};
-  renderResults(result.plates, result.unplaceable, pW);
+  const result=modeRouleau(allItems, pW, gap);
+  lastResult={plates:result.plates, unplaceable:result.unplaceable, pW, gap};
+  renderResults(result.plates, result.unplaceable, pW, gap);
 }
 
 /* ── RENDER ── */
-function renderResults(plates, unplaceable, pW){
+function renderResults(plates, unplaceable, pW, gap=0){
   const totalPlaced=plates.reduce((s,p)=>s+p.placed.length,0);
   const totalItems=visuels.reduce((s,v)=>s+v.qty,0);
-  const usedArea=plates.reduce((s,p)=>s+p.placed.reduce((a,r)=>a+r.w*r.h,0),0);
+  const usedArea=plates.reduce((s,p)=>s+p.placed.reduce((a,r)=>a+(r.realW??r.w)*(r.realH??r.h),0),0);
   const totalLen=plates[0]?.usedLen||0;
   const stockArea=pW*totalLen;
   const efficiency=stockArea>0?Math.round(usedArea/stockArea*100):0;
@@ -578,6 +583,7 @@ function renderResults(plates, unplaceable, pW){
     <div class="stat"><div class="stat-val">${Math.round(totalLen).toLocaleString('fr-FR')}</div><div class="stat-lbl">Longueur totale mm</div></div>
     <div class="stat"><div class="stat-val">${efficiency}%</div><div class="stat-lbl">Rendement surface</div></div>
     <div class="stat"><div class="stat-val">${totalPlaced}/${totalItems}</div><div class="stat-lbl">Visuels placés</div></div>
+    <div class="stat"><div class="stat-val">${(usedArea/1e6).toFixed(3)}</div><div class="stat-lbl">m² visuels total</div></div>
   </div>`;
 
   // Dims card
@@ -590,30 +596,42 @@ function renderResults(plates, unplaceable, pW){
       <div class="dims-sub">${(totalLen/1000).toFixed(3)} m</div></div>
     <div class="dims-block"><div class="dims-lbl">Surface totale</div>
       <div><span class="dims-val" style="font-size:20px">${(stockArea/1e6).toFixed(3)}</span><span class="dims-unit">m²</span></div>
-      <div class="dims-sub">Utilisée : ${(usedArea/1e6).toFixed(3)} m²</div></div>
-    <div class="dims-note">Rendement : ${efficiency}%<br>Perte : ${((stockArea-usedArea)/1e6).toFixed(3)} m²</div>
+      <div class="dims-sub">Visuels : ${(usedArea/1e6).toFixed(3)} m²</div></div>
+    ${gap>0?`<div class="dims-block"><div class="dims-lbl">Espacement</div>
+      <div><span class="dims-val" style="font-size:20px">${gap}</span><span class="dims-unit">mm</span></div>
+      <div class="dims-sub">Entre chaque visuel</div></div>`:''}
+    <div class="dims-note">Rendement : ${efficiency}%<br>m² visuels : ${(usedArea/1e6).toFixed(3)} m²<br>Perte : ${((stockArea-usedArea)/1e6).toFixed(3)} m²</div>
   </div>`;
 
   // Breakdown table
   html+=`<div class="breakdown"><div class="breakdown-hdr"><div class="breakdown-title">Détail par visuel</div></div>
     <div class="breakdown-scroll"><table><thead><tr>
-      <th>Visuel</th><th>Dimensions</th><th>Qté</th><th>Placés</th><th>Statut</th>
+      <th>Visuel</th><th>Dimensions</th><th>Qté</th><th>m² unitaire</th><th>m² total</th><th>Placés</th><th>Statut</th>
     </tr></thead><tbody>`;
   visuels.forEach(v=>{
     const s=sm[v.id];
     const ok=s.placed===v.qty;
     const dot=PDF_COLORS[v.colorIdx].stroke;
+    const unitM2=(v.w*v.h/1e6).toFixed(4);
+    const totalM2=(v.w*v.h*v.qty/1e6).toFixed(4);
     html+=`<tr>
       <td><div class="td-name"><div class="td-dot" style="background:${dot}"></div>${v.name}</div></td>
       <td>${v.w}×${v.h} mm</td><td>${v.qty}</td>
+      <td>${unitM2} m²</td>
+      <td style="font-weight:500;color:var(--accent)">${totalM2} m²</td>
       <td class="${ok?'td-ok':'td-warn'}">${s.placed} ${ok?'✓':'⚠'}</td>
       <td class="${ok?'td-ok':'td-warn'}">${ok?'OK':'Partiel'}</td>
     </tr>`;
   });
   if(unplaceable.length){
     const names=[...new Set(unplaceable.map(u=>u.name))].join(', ');
-    html+=`<tr><td colspan="5" style="color:var(--warn);font-size:10px;padding:8px 11px;">⚠ ${unplaceable.length} visuel(s) non placé(s) — trop grand(s) : ${names}</td></tr>`;
+    html+=`<tr><td colspan="7" style="color:var(--warn);font-size:10px;padding:8px 11px;">⚠ ${unplaceable.length} visuel(s) non placé(s) — trop grand(s) : ${names}</td></tr>`;
   }
+  html+=`<tr style="background:var(--accent-light);">
+    <td colspan="4" style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;">Total m² visuels</td>
+    <td style="font-weight:600;color:var(--accent);font-size:13px;">${(usedArea/1e6).toFixed(4)} m²</td>
+    <td colspan="2" style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted2);">Rouleau : ${(stockArea/1e6).toFixed(3)} m² total</td>
+  </tr>`;
   html+=`</tbody></table></div></div>`;
 
   // Canvas area
@@ -632,11 +650,11 @@ function renderResults(plates, unplaceable, pW){
   results.classList.remove('hidden');
   results.innerHTML=html;
 
-  drawAllPlates(plates, pW, 'canvas-area');
+  drawAllPlates(plates, pW, gap, 'canvas-area');
 }
 
 /* ── DRAW ── */
-function drawPlateToCanvas(plate, pW, canvasW){
+function drawPlateToCanvas(plate, pW, gap, canvasW){
   const dispH=plate.usedLen||1;
   const scale=canvasW/pW;
   const cW=canvasW, cH=Math.max(60,Math.round(dispH*scale));
@@ -660,8 +678,17 @@ function drawPlateToCanvas(plate, pW, canvasW){
 
   // Items
   plate.placed.forEach(p=>{
-    const sx=p.x*scale,sy=p.y*scale,sw=p.w*scale,sh=p.h*scale;
+    const rw=p.realW??p.w, rh=p.realH??p.h;
+    const sx=p.x*scale, sy=p.y*scale;
+    const sw=rw*scale, sh=rh*scale;
     const pc=PDF_COLORS[p.item.colorIdx];
+
+    // Zone de gap (fond bleu très léger)
+    if(gap>0){
+      c.fillStyle='rgba(200,214,239,0.18)';
+      c.fillRect(sx,sy,p.w*scale,p.h*scale);
+    }
+
     c.fillStyle=pc.fill; c.fillRect(sx+1,sy+1,sw-2,sh-2);
     c.strokeStyle=pc.stroke; c.lineWidth=1; c.setLineDash([]);
     c.strokeRect(sx+1.5,sy+1.5,sw-3,sh-3);
@@ -710,12 +737,12 @@ function drawPlateToCanvas(plate, pW, canvasW){
   return cv;
 }
 
-function drawAllPlates(plates, pW, containerId){
+function drawAllPlates(plates, pW, gap, containerId){
   const area=document.getElementById(containerId);
   const availW=area.clientWidth||340;
   const canvasW=Math.max(180, Math.min(340, availW-20));
   plates.forEach((plate,pi)=>{
-    const cv=drawPlateToCanvas(plate,pW,canvasW);
+    const cv=drawPlateToCanvas(plate,pW,gap,canvasW);
     const wrap=document.createElement('div');
     const lbl=document.createElement('div');
     lbl.style.cssText='font-family:IBM Plex Mono,monospace;font-size:8px;color:var(--muted2);letter-spacing:1px;margin-bottom:5px;text-transform:uppercase;font-weight:300;';
@@ -734,10 +761,10 @@ async function exportPDF(){
   const {jsPDF}=window.jspdf;
   const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
   const PW=297,PH=210,M=12;
-  const {plates,unplaceable,pW}=lastResult;
+  const {plates,unplaceable,pW,gap=0}=lastResult;
 
   const totalPlaced=plates.reduce((s,p)=>s+p.placed.length,0);
-  const usedArea=plates.reduce((s,p)=>s+p.placed.reduce((a,r)=>a+r.w*r.h,0),0);
+  const usedArea=plates.reduce((s,p)=>s+p.placed.reduce((a,r)=>a+(r.realW??r.w)*(r.realH??r.h),0),0);
   const totalLen=plates[0]?.usedLen||0;
   const stockArea=pW*totalLen;
   const eff=stockArea>0?Math.round(usedArea/stockArea*100):0;
@@ -869,7 +896,7 @@ async function exportPDF(){
     doc.text(`STRIP ${pi+1} / ${plates.length}`,M,5.5);
     doc.text(`${pW} × ${Math.round(plates[pi].usedLen)} mm — ${plates[pi].placed.length} visuel(s)`,PW-M,5.5,{align:'right'});
 
-    const cv=drawPlateToCanvas(plates[pi],pW,700);
+    const cv=drawPlateToCanvas(plates[pi],pW,gap,700);
     const img=cv.toDataURL('image/png');
     const aW=PW-M*2-14,aH=PH-24,asp=cv.width/cv.height;
     let iW=aW*.72,iH=iW/asp;
@@ -902,7 +929,7 @@ async function exportPDF(){
 
     // Stats plaque
     const pl=plates[pi];
-    const sU=pl.placed.reduce((a,r)=>a+r.w*r.h,0);
+    const sU=pl.placed.reduce((a,r)=>a+(r.realW??r.w)*(r.realH??r.h),0);
     const sT=pW*pl.usedLen;
     const sE=sT>0?Math.round(sU/sT*100):0;
     // Pied bleu
