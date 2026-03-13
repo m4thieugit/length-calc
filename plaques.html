@@ -383,6 +383,13 @@ tr:hover td{background:var(--accent-light);}
           <div class="field-note">Longueur fixe</div>
         </div>
       </div>
+      <div style="margin-top:9px;">
+        <div class="field">
+          <label>Espacement mm</label>
+          <input type="number" id="pGap" value="10" min="0">
+          <div class="field-note">Marge entre les visuels</div>
+        </div>
+      </div>
     </div>
     <div class="sb-sec" style="flex:1;overflow-y:auto;">
       <div class="slabel">Visuels</div>
@@ -462,23 +469,25 @@ function renderSidebar(){
    stripH : hauteur max (1e9 pour mode infini)
    Retourne : { placed:[{item,x,y,w,h,rot}], notPlaced:[item], usedLen }
    ══════════════════════════════════════════════════════════════ */
-function maxRectsPass(items, stripW, stripH){
+function maxRectsPass(items, stripW, stripH, gap=0){
+  // On réduit la plaque d'un demi-gap sur chaque bord extérieur
+  const G=gap;
   let free=[{x:0,y:0,w:stripW,h:stripH}];
   const placed=[], notPlaced=[];
 
   for(const item of items){
-    // Collect valid orientations for this item
+    // Dimensions avec gap ajouté (espace autour de chaque item)
+    const iw=item.w+G, ih=item.h+G;
+    const iwr=item.h+G, ihr=item.w+G;
     const orients=[];
-    if(item.w<=stripW && item.h<=stripH) orients.push({w:item.w,h:item.h,rot:false});
-    if(item.h<=stripW && item.w<=stripH && !(item.w===item.h))
-      orients.push({w:item.h,h:item.w,rot:true});
-    // Deduplicate (square items)
+    if(iw<=stripW && ih<=stripH) orients.push({w:iw,h:ih,rot:false});
+    if(iwr<=stripW && ihr<=stripH && !(item.w===item.h))
+      orients.push({w:iwr,h:ihr,rot:true});
     const seen=new Set();
     const uniq=orients.filter(o=>{const k=o.w+'x'+o.h;return seen.has(k)?false:(seen.add(k),true);});
 
     if(!uniq.length){notPlaced.push(item);continue;}
 
-    // Bottom-Left: find lowest-then-leftmost free rect that fits
     let bx=-1,by=-1,bOri=null;
     for(const o of uniq){
       for(const r of free){
@@ -492,21 +501,22 @@ function maxRectsPass(items, stripW, stripH){
 
     if(bOri===null){notPlaced.push(item);continue;}
 
-    const p={item,x:bx,y:by,w:bOri.w,h:bOri.h,rot:bOri.rot};
+    // On stocke la position avec gap, mais les vraies dimensions sans gap pour l'affichage
+    const realW=bOri.rot?item.h:item.w;
+    const realH=bOri.rot?item.w:item.h;
+    const p={item, x:bx, y:by, w:bOri.w, h:bOri.h, realW, realH, rot:bOri.rot};
     placed.push(p);
 
-    // Split all free rects that overlap the placed rect
     const nf=[];
     for(const r of free){
       if(!(p.x<r.x+r.w && p.x+p.w>r.x && p.y<r.y+r.h && p.y+p.h>r.y)){
-        nf.push(r); continue; // no overlap
+        nf.push(r); continue;
       }
       if(r.x<p.x)            nf.push({x:r.x,      y:r.y,      w:p.x-r.x,            h:r.h});
       if(r.x+r.w>p.x+p.w)   nf.push({x:p.x+p.w,  y:r.y,      w:r.x+r.w-p.x-p.w,   h:r.h});
       if(r.y<p.y)            nf.push({x:r.x,      y:r.y,      w:r.w,                 h:p.y-r.y});
       if(r.y+r.h>p.y+p.h)   nf.push({x:r.x,      y:p.y+p.h,  w:r.w,                 h:r.y+r.h-p.y-p.h});
     }
-    // Prune: remove rects fully contained in another
     free=nf.filter((a,i)=>!nf.some((b,j)=>i!==j&&a.x>=b.x&&a.y>=b.y&&a.x+a.w<=b.x+b.w&&a.y+a.h<=b.y+b.h)&&a.w>0&&a.h>0);
   }
 
@@ -524,13 +534,12 @@ function maxRectsPass(items, stripW, stripH){
    On découpe les visuels sur N plaques de taille pW × pH.
    On essaie plusieurs ordres de tri et on garde le moins de plaques.
    ══════════════════════════════════════════════════════════════ */
-function modePlaques(items, stripW, stripH){
-  // Items trop grands pour la plaque même en rotation
+function modePlaques(items, stripW, stripH, gap=0){
   const tooBig=items.filter(it=>
-    (it.w>stripW || it.h>stripH) && (it.h>stripW || it.w>stripH)
+    (it.w+gap>stripW || it.h+gap>stripH) && (it.h+gap>stripW || it.w+gap>stripH)
   );
   const valid=items.filter(it=>
-    (it.w<=stripW && it.h<=stripH) || (it.h<=stripW && it.w<=stripH)
+    (it.w+gap<=stripW && it.h+gap<=stripH) || (it.h+gap<=stripW && it.w+gap<=stripH)
   );
 
   const SORTS=[
@@ -542,7 +551,7 @@ function modePlaques(items, stripW, stripH){
 
   let best=null;
   for(const sortFn of SORTS){
-    const r=packOnPlaques(sortFn(valid), stripW, stripH);
+    const r=packOnPlaques(sortFn(valid), stripW, stripH, gap);
     if(!best||r.plates.length<best.plates.length||(r.plates.length===best.plates.length&&r.plates[r.plates.length-1]?.placed.length>best.plates[best.plates.length-1]?.placed.length))
       best=r;
   }
@@ -553,13 +562,13 @@ function modePlaques(items, stripW, stripH){
   };
 }
 
-function packOnPlaques(items, pW, pH){
+function packOnPlaques(items, pW, pH, gap=0){
   const plates=[];
   let remaining=[...items];
 
   while(remaining.length>0){
-    const result=maxRectsPass(remaining, pW, pH);
-    if(result.placed.length===0) break; // sécurité anti-boucle infinie
+    const result=maxRectsPass(remaining, pW, pH, gap);
+    if(result.placed.length===0) break;
     plates.push({placed:result.placed, usedLen:pH, plateH:pH});
     remaining=result.notPlaced;
   }
@@ -570,6 +579,7 @@ function packOnPlaques(items, pW, pH){
 function calculate(){
   const pW=parseFloat(document.getElementById('pW').value);
   const pH=parseFloat(document.getElementById('pH').value);
+  const gap=Math.max(0,parseFloat(document.getElementById('pGap').value)||0);
   if(!pW||pW<=0){alert('Largeur de plaque invalide');return;}
   if(!pH||pH<=0){alert('Longueur de plaque invalide');return;}
   if(!visuels.length){alert('Ajoutez au moins un visuel');return;}
@@ -580,16 +590,16 @@ function calculate(){
       allItems.push({vId:v.id,w:v.w,h:v.h,colorIdx:v.colorIdx,name:v.name,idx:i});
   });
 
-  const result=modePlaques(allItems, pW, pH);
-  lastResult={plates:result.plates, unplaceable:result.unplaceable, pW, pH};
-  renderResults(result.plates, result.unplaceable, pW, pH);
+  const result=modePlaques(allItems, pW, pH, gap);
+  lastResult={plates:result.plates, unplaceable:result.unplaceable, pW, pH, gap};
+  renderResults(result.plates, result.unplaceable, pW, pH, gap);
 }
 
 /* ── RENDER ── */
-function renderResults(plates, unplaceable, pW, pH){
+function renderResults(plates, unplaceable, pW, pH, gap=0){
   const totalPlaced=plates.reduce((s,p)=>s+p.placed.length,0);
   const totalItems=visuels.reduce((s,v)=>s+v.qty,0);
-  const usedArea=plates.reduce((s,p)=>s+p.placed.reduce((a,r)=>a+r.w*r.h,0),0);
+  const usedArea=plates.reduce((s,p)=>s+p.placed.reduce((a,r)=>a+(r.realW??r.w)*(r.realH??r.h),0),0);
   const plateArea=pW*pH;
   const totalArea=plateArea*plates.length;
   const efficiency=totalArea>0?Math.round(usedArea/totalArea*100):0;
@@ -670,11 +680,11 @@ function renderResults(plates, unplaceable, pW, pH){
   results.classList.remove('hidden');
   results.innerHTML=html;
 
-  drawAllPlates(plates, pW, pH, 'canvas-area');
+  drawAllPlates(plates, pW, pH, gap, 'canvas-area');
 }
 
 /* ── DRAW ── */
-function drawPlateToCanvas(plate, pW, pH, canvasW){
+function drawPlateToCanvas(plate, pW, pH, gap, canvasW){
   const dispH=pH||plate.usedLen||1;
   const scale=canvasW/pW;
   const cW=canvasW, cH=Math.max(60,Math.round(dispH*scale));
@@ -698,8 +708,19 @@ function drawPlateToCanvas(plate, pW, pH, canvasW){
 
   // Items
   plate.placed.forEach(p=>{
-    const sx=p.x*scale,sy=p.y*scale,sw=p.w*scale,sh=p.h*scale;
+    // Coordonnées et dimensions réelles (sans gap) pour l'affichage
+    const rw=p.realW??p.w, rh=p.realH??p.h;
+    const sx=p.x*scale, sy=p.y*scale;
+    const sw=rw*scale, sh=rh*scale;
     const pc=PDF_COLORS[p.item.colorIdx];
+
+    // Zone de gap (fond hachuré léger)
+    if(gap>0){
+      const gw=p.w*scale, gh=p.h*scale;
+      c.fillStyle='rgba(200,214,239,0.18)';
+      c.fillRect(sx,sy,gw,gh);
+    }
+
     c.fillStyle=pc.fill; c.fillRect(sx+1,sy+1,sw-2,sh-2);
     c.strokeStyle=pc.stroke; c.lineWidth=1; c.setLineDash([]);
     c.strokeRect(sx+1.5,sy+1.5,sw-3,sh-3);
@@ -748,16 +769,16 @@ function drawPlateToCanvas(plate, pW, pH, canvasW){
   return cv;
 }
 
-function drawAllPlates(plates, pW, pH, containerId){
+function drawAllPlates(plates, pW, pH, gap, containerId){
   const area=document.getElementById(containerId);
   const availW=area.clientWidth||340;
   const canvasW=Math.max(180, Math.min(340, availW-20));
   plates.forEach((plate,pi)=>{
-    const cv=drawPlateToCanvas(plate,pW,pH,canvasW);
+    const cv=drawPlateToCanvas(plate,pW,pH,gap,canvasW);
     const wrap=document.createElement('div');
     const lbl=document.createElement('div');
     lbl.style.cssText='font-family:IBM Plex Mono,monospace;font-size:8px;color:var(--muted2);letter-spacing:1px;margin-bottom:5px;text-transform:uppercase;font-weight:300;';
-    const plateUsedM2=(plate.placed.reduce((a,r)=>a+r.w*r.h,0)/1e6).toFixed(3);
+    const plateUsedM2=(plate.placed.reduce((a,r)=>a+r.realW*r.realH,0)/1e6).toFixed(3);
     lbl.textContent=`Plaque ${pi+1}/${plates.length} — ${pW}×${pH} mm — ${plate.placed.length} visuel(s) — ${plateUsedM2} m² utilisé`;
     wrap.appendChild(lbl);wrap.appendChild(cv);
     area.appendChild(wrap);
@@ -773,10 +794,10 @@ async function exportPDF(){
   const {jsPDF}=window.jspdf;
   const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
   const PW=297,PH=210,M=12;
-  const {plates,unplaceable,pW,pH}=lastResult;
+  const {plates,unplaceable,pW,pH,gap=0}=lastResult;
 
   const totalPlaced=plates.reduce((s,p)=>s+p.placed.length,0);
-  const usedArea=plates.reduce((s,p)=>s+p.placed.reduce((a,r)=>a+r.w*r.h,0),0);
+  const usedArea=plates.reduce((s,p)=>s+p.placed.reduce((a,r)=>a+(r.realW??r.w)*(r.realH??r.h),0),0);
   const plateArea=pW*pH;
   const totalArea=plateArea*plates.length;
   const eff=totalArea>0?Math.round(usedArea/totalArea*100):0;
@@ -910,7 +931,7 @@ async function exportPDF(){
     doc.text(`PLAQUE ${pi+1} / ${plates.length}`,M,5.5);
     doc.text(`${pW} × ${pH} mm — ${plates[pi].placed.length} visuel(s)`,PW-M,5.5,{align:'right'});
 
-    const cv=drawPlateToCanvas(plates[pi],pW,pH,700);
+    const cv=drawPlateToCanvas(plates[pi],pW,pH,gap,700);
     const img=cv.toDataURL('image/png');
     const aW=PW-M*2-14,aH=PH-24,asp=cv.width/cv.height;
     let iW=aW*.72,iH=iW/asp;
@@ -961,8 +982,8 @@ function hexToRgb(hex){return{r:parseInt(hex.slice(1,3),16),g:parseInt(hex.slice
 
 /* ── DEFAULT DATA ── */
 const DEFAULT=[
-  {w:1000,h:1000,qty:1,name:'Visuel #1'}
-  /*,{w:585,h:320,qty:2,name:'Visuel 2'},
+  {w:1000,h:1000,qty:1,name:'Visuel #1'}/*
+  ,{w:585,h:320,qty:2,name:'Visuel 2'},
   {w:710,h:960,qty:1,name:'Visuel 3'},{w:460,h:960,qty:1,name:'Visuel 4'},
   {w:460,h:855,qty:1,name:'Visuel 5'},{w:565,h:310,qty:2,name:'Visuel 6'},
   {w:485,h:310,qty:1,name:'Visuel 7'},{w:705,h:1485,qty:2,name:'Visuel 8'},
