@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculateur de longueur rouleau</title>
+<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{
+  --bg:#f0f4fb;
+  --surface:#ffffff;
+  --surface2:#f7f9fd;
+  --border:#dde5f4;
+  --border2:#c8d6ef;
+  --accent:#1a56db;
+  --accent-light:#e8effd;
+  --accent-mid:#4a7fe8;
+  --warn:#e05c3a;
+  --warn-dim:rgba(224,92,58,0.08);
+  --text:#0d1a35;
+  --muted:#8096bb;
+  --muted2:#a0b0cc;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Raleway',sans-serif;
+  font-weight:400;
+  min-height:100vh;
+}
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  pointer-events:none;z-index:0;
+  background-image:radial-gradient(circle at 1px 1px, rgba(26,86,219,0.06) 1px, transparent 0);
+  background-size:28px 28px;
+}
+.page{position:relative;z-index:1;display:grid;grid-template-rows:auto 1fr;min-height:100vh;}
+
+header{
+  border-bottom:1px solid var(--border);
+  padding:14px 26px;
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(255,255,255,0.92);
+  backdrop-filter:blur(16px);
+  position:sticky;top:0;z-index:100;
+  box-shadow:0 1px 12px rgba(26,86,219,0.07);
+}
+.logo{display:flex;align-items:baseline;gap:13px;flex-wrap:wrap;min-width:0;}
+.logo h1{
+  font-size:15px;
+  font-weight:400;
+  letter-spacing:0.05em;
+  color:var(--text);
+  white-space:nowrap;
+}
+.logo h1 em{font-style:normal;color:var(--accent);font-weight:600;}
+.logo-sub{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:9px;letter-spacing:3px;
+  color:var(--muted);text-transform:uppercase;
+  font-weight:300;
+}
+.header-right{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+@media(max-width:600px){
+  header{padding:12px 16px;gap:8px;}
+  .logo h1{font-size:12px;letter-spacing:0;}
+  .logo-sub{display:none;}
+  .hbadge{display:none;}
+}
+.hbadge{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:8px;letter-spacing:2px;
+  color:var(--accent);
+  border:1px solid var(--border2);
+  background:var(--accent-light);
+  padding:4px 10px;border-radius:20px;
+  text-transform:uppercase;font-weight:400;
+}
+.pdf-btn{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:8px;letter-spacing:2px;
+  color:#fff;background:var(--accent);
+  border:none;padding:6px 14px;border-radius:20px;
+  text-transform:uppercase;cursor:pointer;font-weight:400;
+  transition:all .2s;display:none;
+  box-shadow:0 2px 10px rgba(26,86,219,0.3);
+}
+.pdf-btn:hover{background:var(--accent-mid);box-shadow:0 4px 16px rgba(26,86,219,0.4);transform:translateY(-1px);}
+.pdf-btn.visible{display:block;}
+
+.main{display:grid;grid-template-columns:370px 1fr;min-height:calc(100vh - 57px);}
+@media(max-width:960px){
+  .main{grid-template-columns:1fr;min-height:unset;}
+}
+
+.sidebar{
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  overflow-y:auto;
+  max-height:calc(100vh - 57px);
+  position:sticky;top:57px;
+  background:var(--surface);
+}
+@media(max-width:960px){
+  .sidebar{
+    position:static;
+    max-height:none;
+    overflow-y:visible;
+    border-right:none;
+    border-bottom:1px solid var(--border);
+  }
+}
+.sb-sec{border-bottom:1px solid var(--border);padding:16px 18px;}
+
+.slabel{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:8px;letter-spacing:4px;text-transform:uppercase;
+  color:var(--accent);margin-bottom:12px;
+  display:flex;align-items:center;gap:9px;
+  font-weight:400;
+}
+.slabel::after{content:'';flex:1;height:1px;background:var(--border);}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;}
+
+.field{display:flex;flex-direction:column;gap:5px;}
+.field label{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:8px;color:var(--muted);
+  letter-spacing:1px;text-transform:uppercase;font-weight:400;
+}
+.field input{
+  background:var(--surface2);
+  border:1px solid var(--border);
+  color:var(--text);
+  font-family:'IBM Plex Mono',monospace;
+  font-size:13px;font-weight:400;
+  padding:8px 10px;border-radius:6px;
+  outline:none;transition:border-color .2s,box-shadow .2s;width:100%;
+}
+.field input:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(26,86,219,0.1);
+  background:#fff;
+}
+.field input::placeholder{color:var(--muted2);font-size:11px;}
+.field-note{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:8px;color:var(--accent-mid);margin-top:1px;font-weight:300;
+}
+
+.visuels-list{display:flex;flex-direction:column;gap:7px;}
+.vrow{
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:8px;overflow:hidden;
+  transition:box-shadow .2s;
+}
+.vrow:hover{box-shadow:0 2px 12px rgba(26,86,219,0.1);}
+.vrow-head{display:flex;align-items:center;padding:8px 10px;gap:8px;}
+.vdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.vname{
+  flex:1;background:transparent;border:none;
+  color:var(--text);
+  font-family:'Raleway',sans-serif;
+  font-size:12px;font-weight:500;
+  outline:none;cursor:pointer;min-width:0;
+}
+.vname:focus{cursor:text;}
+.vsummary{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:9px;color:var(--muted2);white-space:nowrap;font-weight:400;
+}
+.vdel{
+  background:none;border:none;color:var(--muted2);
+  cursor:pointer;font-size:11px;
+  padding:3px 6px;border-radius:4px;
+  transition:color .15s,background .15s;flex-shrink:0;
+}
+.vdel:hover{color:var(--warn);background:var(--warn-dim);}
+.vfields{padding:8px 10px 11px;border-top:1px solid var(--border);}
+
+.add-btn{
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  width:100%;padding:9px;
+  background:transparent;
+  border:1.5px dashed var(--border2);
+  color:var(--muted);
+  font-family:'IBM Plex Mono',monospace;
+  font-size:9px;letter-spacing:1px;
+  cursor:pointer;border-radius:8px;
+  transition:all .2s;margin-top:7px;font-weight:400;
+}
+.add-btn:hover{
+  border-color:var(--accent);
+  color:var(--accent);
+  background:var(--accent-light);
+}
+
+.calc-btn{
+  margin:14px 18px 18px;
+  padding:13px;
+  background:var(--accent);
+  color:#fff;border:none;
+  font-family:'Raleway',sans-serif;
+  font-weight:500;font-size:11px;
+  letter-spacing:4px;text-transform:uppercase;
+  cursor:pointer;border-radius:8px;
+  transition:all .2s;
+  box-shadow:0 3px 14px rgba(26,86,219,0.3);
+}
+.calc-btn:hover{
+  background:var(--accent-mid);
+  transform:translateY(-1px);
+  box-shadow:0 6px 20px rgba(26,86,219,0.4);
+}
+.calc-btn:active{transform:none;}
+
+.content{overflow-y:auto;padding:24px 28px;}
+@media(max-width:600px){.content{padding:16px;}}
+
+.empty{
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:center;height:100%;min-height:400px;
+  color:var(--muted2);gap:12px;
+}
+.empty-icon{font-size:48px;opacity:0.15;line-height:1;}
+.empty p{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:9px;letter-spacing:3px;
+  text-transform:uppercase;opacity:.5;font-weight:300;
+}
+
+.summary-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px;}
+@media(max-width:700px){.summary-bar{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:380px){.summary-bar{grid-template-columns:1fr 1fr;}}
+
+.stat{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:10px;padding:14px 16px;
+  box-shadow:0 1px 6px rgba(26,86,219,0.05);
+  transition:box-shadow .2s;
+}
+.stat:hover{box-shadow:0 4px 16px rgba(26,86,219,0.1);}
+.stat-val{
+  font-size:22px;font-weight:300;
+  letter-spacing:-0.5px;color:var(--accent);line-height:1;
+}
+.stat-lbl{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:8px;letter-spacing:2px;
+  text-transform:uppercase;color:var(--muted2);
+  margin-top:4px;font-weight:300;
+}
+
+.dims-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-left:3px solid var(--accent);
+  border-radius:10px;padding:14px 18px;margin-bottom:18px;
+  display:flex;align-items:stretch;gap:10px 0;flex-wrap:wrap;
+  box-shadow:0 1px 8px rgba(26,86,219,0.06);
+}
+.dims-block{padding:0 20px 0 0;}
+.dims-block+.dims-block{border-left:1px solid var(--border);padding-left:20px;}
+@media(max-width:600px){
+  .dims-card{gap:14px 0;}
+  .dims-block{padding:0;border-left:none!important;padding-left:0!important;width:50%;}
+  .dims-note{margin-left:0;text-align:left;padding-left:0;width:100%;border-top:1px solid var(--border);padding-top:10px;margin-top:4px;}
+}
+.dims-lbl{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:8px;letter-spacing:3px;text-transform:uppercase;
+  color:var(--muted2);margin-bottom:4px;font-weight:300;
+}
+.dims-val{font-size:22px;font-weight:300;letter-spacing:-0.5px;color:var(--accent);line-height:1;}
+.dims-unit{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10px;color:var(--muted2);margin-left:3px;font-weight:300;
+}
+.dims-sub{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:9px;color:var(--muted);margin-top:3px;font-weight:300;
+}
+.dims-note{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:9px;color:var(--muted);margin-left:auto;
+  line-height:1.8;text-align:right;align-self:center;
+  padding-left:14px;font-weight:400;
+}
+
+.breakdown{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:10px;overflow:hidden;margin-bottom:22px;
+  box-shadow:0 1px 6px rgba(26,86,219,0.05);
+}
+.breakdown-hdr{
+  padding:9px 14px;
+  border-bottom:1px solid var(--border);
+  background:var(--surface2);
+}
+.breakdown-title{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:8px;letter-spacing:3px;
+  text-transform:uppercase;color:var(--muted);font-weight:300;
+}
+.breakdown-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+
+table{width:100%;border-collapse:collapse;}
+th{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:8px;letter-spacing:2px;text-transform:uppercase;
+  color:var(--muted2);padding:8px 12px;text-align:left;
+  border-bottom:1px solid var(--border);white-space:nowrap;font-weight:300;
+}
+td{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;color:var(--text);
+  padding:8px 12px;border-bottom:1px solid var(--border);font-weight:400;
+}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--accent-light);}
+
+.td-name{display:flex;align-items:center;gap:7px;}
+.td-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.td-ok{color:#16a34a;}
+.td-warn{color:var(--warn);}
+
+.plates-sec-hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:12px;flex-wrap:wrap;gap:8px;
+}
+.plates-sec-title{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:8px;letter-spacing:3px;
+  text-transform:uppercase;color:var(--muted2);font-weight:300;
+}
+
+.legend{display:flex;flex-wrap:wrap;gap:9px;}
+.legend-item{
+  display:flex;align-items:center;gap:5px;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:9px;color:var(--muted);font-weight:400;
+}
+.legend-sw{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.hidden{display:none!important;}
+</style>
+</head>
+<body>
+<div class="page">
+<header>
+  <div class="logo">
+    <h1>CALCUL DE LONGUEUR DE <em>ROULEAU</em></h1>
+    <span class="logo-sub">Laize fixe · longueur optimisée</span>
+  </div>
+  <div class="header-right">
+    <button class="pdf-btn" id="pdf-btn" onclick="exportPDF()">⬇ Export PDF</button>
+    <span class="hbadge">Strip Packing 2D</span>
+  </div>
+</header>
+<div class="main">
+  <div class="sidebar">
+    <div class="sb-sec">
+      <div class="slabel">Dimensions</div>
+      <div class="grid2">
+        <div class="field">
+          <label>Largeur mm</label>
+          <input type="number" id="pW" value="1370" min="1">
+          <div class="field-note">Largeur fixe (laize)</div>
+        </div>
+      </div>
+    </div>
+    <div class="sb-sec" style="flex:1;overflow-y:auto;">
+      <div class="slabel">Visuels</div>
+      <div class="visuels-list" id="visuels-list"></div>
+      <button class="add-btn" onclick="addVisuel()">+ Ajouter un visuel</button>
+    </div>
+    <button class="calc-btn" onclick="calculate()">▶ CALCULER</button>
+  </div>
+  <div class="content">
+    <div class="empty" id="empty-state">
+      <div class="empty-icon">▦</div>
+      <p>Configurez et calculez</p>
+    </div>
+    <div id="results" class="hidden"></div>
+  </div>
+</div>
+</div>
+
+<script>
+const PDF_COLORS=[
+  {fill:'#b8d4f0',stroke:'#2d5fa8'},{fill:'#b8e8cc',stroke:'#27854f'},
+  {fill:'#f0b8d4',stroke:'#8a2760'},{fill:'#f0deb8',stroke:'#8a6e27'},
+  {fill:'#b8dce8',stroke:'#27748a'},{fill:'#d8b8f0',stroke:'#6e278a'},
+  {fill:'#f0ccb8',stroke:'#8a4427'},{fill:'#b8f0f0',stroke:'#27888a'},
+  {fill:'#f0b8b8',stroke:'#8a2727'},{fill:'#b8f0b8',stroke:'#278a27'},
+];
+
+let visuels=[],nextId=1;
+let lastResult=null; // {plates, pW}
+
+/* ── UI ── */
+function addVisuel(w=500,h=500,qty=1,name=null){
+  const id=nextId++;
+  const ci=visuels.length%PDF_COLORS.length;
+  visuels.push({id,w,h,qty,colorIdx:ci,name:name||`Visuel #${id}`});
+  renderSidebar();
+}
+function removeVisuel(id){
+  visuels=visuels.filter(v=>v.id!==id);
+  visuels.forEach((v,i)=>{v.colorIdx=i%PDF_COLORS.length;});
+  renderSidebar();
+}
+function updateName(id,val){const v=visuels.find(x=>x.id===id);if(v)v.name=val||`Visuel #${id}`;}
+function updateField(id,field,val){
+  const v=visuels.find(x=>x.id===id);if(!v)return;
+  const n=parseFloat(val);if(!isNaN(n)&&n>0)v[field]=n;
+  const s=document.querySelector(`[data-vid="${id}"] .vsummary`);
+  if(s)s.textContent=`${v.w}×${v.h} ×${v.qty}`;
+}
+function renderSidebar(){
+  const list=document.getElementById('visuels-list');
+  list.innerHTML='';
+  visuels.forEach(v=>{
+    const dot=PDF_COLORS[v.colorIdx].stroke;
+    const row=document.createElement('div');
+    row.className='vrow';row.dataset.vid=v.id;
+    row.innerHTML=`
+      <div class="vrow-head">
+        <div class="vdot" style="background:${dot}"></div>
+        <input class="vname" value="${v.name}" onchange="updateName(${v.id},this.value)" onclick="this.select()">
+        <span class="vsummary">${v.w}×${v.h} ×${v.qty}</span>
+        <button class="vdel" onclick="removeVisuel(${v.id})">✕</button>
+      </div>
+      <div class="vfields"><div class="grid3">
+        <div class="field"><label>Larg. mm</label><input type="number" value="${v.w}" min="1" onchange="updateField(${v.id},'w',this.value)"></div>
+        <div class="field"><label>Long. mm</label><input type="number" value="${v.h}" min="1" onchange="updateField(${v.id},'h',this.value)"></div>
+        <div class="field"><label>Quantité</label><input type="number" value="${v.qty}" min="1" onchange="updateField(${v.id},'qty',this.value)"></div>
+      </div></div>`;
+    list.appendChild(row);
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MOTEUR MAXRECTS COMMUN
+   items  : [{w, h, ...meta}]  — déjà dans l'orientation voulue
+   stripW : largeur fixe
+   stripH : hauteur max (1e9 pour mode infini)
+   Retourne : { placed:[{item,x,y,w,h,rot}], notPlaced:[item], usedLen }
+   ══════════════════════════════════════════════════════════════ */
+function maxRectsPass(items, stripW, stripH){
+  let free=[{x:0,y:0,w:stripW,h:stripH}];
+  const placed=[], notPlaced=[];
+
+  for(const item of items){
+    // Collect valid orientations for this item
+    const orients=[];
+    if(item.w<=stripW && item.h<=stripH) orients.push({w:item.w,h:item.h,rot:false});
+    if(item.h<=stripW && item.w<=stripH && !(item.w===item.h))
+      orients.push({w:item.h,h:item.w,rot:true});
+    // Deduplicate (square items)
+    const seen=new Set();
+    const uniq=orients.filter(o=>{const k=o.w+'x'+o.h;return seen.has(k)?false:(seen.add(k),true);});
+
+    if(!uniq.length){notPlaced.push(item);continue;}
+
+    // Bottom-Left: find lowest-then-leftmost free rect that fits
+    let bx=-1,by=-1,bOri=null;
+    for(const o of uniq){
+      for(const r of free){
+        if(o.w<=r.w && o.h<=r.h){
+          if(by===-1 || r.y<by || (r.y===by && r.x<bx)){
+            bx=r.x; by=r.y; bOri=o;
+          }
+        }
+      }
+    }
+
+    if(bOri===null){notPlaced.push(item);continue;}
+
+    const p={item,x:bx,y:by,w:bOri.w,h:bOri.h,rot:bOri.rot};
+    placed.push(p);
+
+    // Split all free rects that overlap the placed rect
+    const nf=[];
+    for(const r of free){
+      if(!(p.x<r.x+r.w && p.x+p.w>r.x && p.y<r.y+r.h && p.y+p.h>r.y)){
+        nf.push(r); continue; // no overlap
+      }
+      if(r.x<p.x)            nf.push({x:r.x,      y:r.y,      w:p.x-r.x,            h:r.h});
+      if(r.x+r.w>p.x+p.w)   nf.push({x:p.x+p.w,  y:r.y,      w:r.x+r.w-p.x-p.w,   h:r.h});
+      if(r.y<p.y)            nf.push({x:r.x,      y:r.y,      w:r.w,                 h:p.y-r.y});
+      if(r.y+r.h>p.y+p.h)   nf.push({x:r.x,      y:p.y+p.h,  w:r.w,                 h:r.y+r.h-p.y-p.h});
+    }
+    // Prune: remove rects fully contained in another
+    free=nf.filter((a,i)=>!nf.some((b,j)=>i!==j&&a.x>=b.x&&a.y>=b.y&&a.x+a.w<=b.x+b.w&&a.y+a.h<=b.y+b.h)&&a.w>0&&a.h>0);
+  }
+
+  const usedLen=placed.length?Math.max(...placed.map(p=>p.y+p.h)):0;
+  return {placed,notPlaced,usedLen};
+}
+
+/* ══════════════════════════════════════════════════════════════
+   ALGORITHME 1 — MODE ROULEAU (longueur illimitée)
+   On essaie plusieurs ordres de tri et on garde le strip
+   avec la longueur utilisée la plus courte.
+   ══════════════════════════════════════════════════════════════ */
+function modeRouleau(items, stripW){
+  // Items trop larges même en rotation
+  const tooBig=items.filter(it=>Math.min(it.w,it.h)>stripW);
+  const valid =items.filter(it=>Math.min(it.w,it.h)<=stripW);
+
+  const SORTS=[
+    a=>[...a].sort((x,y)=>Math.max(y.w,y.h)-Math.max(x.w,x.h)),  // grand côté ↓
+    a=>[...a].sort((x,y)=>y.w*y.h-x.w*x.h),                       // aire ↓
+    a=>[...a].sort((x,y)=>y.w+y.h-x.w-x.h),                       // périmètre ↓
+    a=>[...a].sort((x,y)=>Math.min(y.w,y.h)-Math.min(x.w,x.h)),   // petit côté ↓
+  ];
+
+  let best=null;
+  for(const sortFn of SORTS){
+    const r=maxRectsPass(sortFn(valid), stripW, 1e9);
+    if(!best||r.usedLen<best.usedLen) best=r;
+  }
+
+  // Une seule plaque virtuelle
+  return {
+    plates:[{placed:best.placed, usedLen:best.usedLen, plateH:null}],
+    unplaceable:tooBig
+  };
+}
+
+/* ── CALCULATE ── */
+function calculate(){
+  const pW=parseFloat(document.getElementById('pW').value);
+  if(!pW||pW<=0){alert('Largeur de laize invalide');return;}
+  if(!visuels.length){alert('Ajoutez au moins un visuel');return;}
+
+  const allItems=[];
+  visuels.forEach(v=>{
+    for(let i=0;i<v.qty;i++)
+      allItems.push({vId:v.id,w:v.w,h:v.h,colorIdx:v.colorIdx,name:v.name,idx:i});
+  });
+
+  const result=modeRouleau(allItems, pW);
+  lastResult={plates:result.plates, unplaceable:result.unplaceable, pW};
+  renderResults(result.plates, result.unplaceable, pW);
+}
+
+/* ── RENDER ── */
+function renderResults(plates, unplaceable, pW){
+  const totalPlaced=plates.reduce((s,p)=>s+p.placed.length,0);
+  const totalItems=visuels.reduce((s,v)=>s+v.qty,0);
+  const usedArea=plates.reduce((s,p)=>s+p.placed.reduce((a,r)=>a+r.w*r.h,0),0);
+  const totalLen=plates[0]?.usedLen||0;
+  const stockArea=pW*totalLen;
+  const efficiency=stockArea>0?Math.round(usedArea/stockArea*100):0;
+
+  // Per-visuel stats
+  const sm={};
+  visuels.forEach(v=>{sm[v.id]={placed:0,plates:new Set()};});
+  plates.forEach((p,pi)=>p.placed.forEach(r=>{sm[r.item.vId].placed++;sm[r.item.vId].plates.add(pi+1);}));
+
+  let html='';
+
+  // Summary bar
+  html+=`<div class="summary-bar">
+    <div class="stat"><div class="stat-val">${Math.round(totalLen).toLocaleString('fr-FR')}</div><div class="stat-lbl">Longueur totale mm</div></div>
+    <div class="stat"><div class="stat-val">${efficiency}%</div><div class="stat-lbl">Rendement surface</div></div>
+    <div class="stat"><div class="stat-val">${totalPlaced}/${totalItems}</div><div class="stat-lbl">Visuels placés</div></div>
+  </div>`;
+
+  // Dims card
+  html+=`<div class="dims-card">
+    <div class="dims-block"><div class="dims-lbl">Largeur (laize)</div>
+      <div><span class="dims-val">${pW.toLocaleString('fr-FR')}</span><span class="dims-unit">mm</span></div>
+      <div class="dims-sub">${(pW/1000).toFixed(3)} m</div></div>
+    <div class="dims-block"><div class="dims-lbl">Longueur nécessaire <span style="color:var(--accent);font-size:8px">(auto)</span></div>
+      <div><span class="dims-val">${Math.round(totalLen).toLocaleString('fr-FR')}</span><span class="dims-unit">mm</span></div>
+      <div class="dims-sub">${(totalLen/1000).toFixed(3)} m</div></div>
+    <div class="dims-block"><div class="dims-lbl">Surface totale</div>
+      <div><span class="dims-val" style="font-size:20px">${(stockArea/1e6).toFixed(3)}</span><span class="dims-unit">m²</span></div>
+      <div class="dims-sub">Utilisée : ${(usedArea/1e6).toFixed(3)} m²</div></div>
+    <div class="dims-note">Rendement : ${efficiency}%<br>Perte : ${((stockArea-usedArea)/1e6).toFixed(3)} m²</div>
+  </div>`;
+
+  // Breakdown table
+  html+=`<div class="breakdown"><div class="breakdown-hdr"><div class="breakdown-title">Détail par visuel</div></div>
+    <div class="breakdown-scroll"><table><thead><tr>
+      <th>Visuel</th><th>Dimensions</th><th>Qté</th><th>Placés</th><th>Statut</th>
+    </tr></thead><tbody>`;
+  visuels.forEach(v=>{
+    const s=sm[v.id];
+    const ok=s.placed===v.qty;
+    const dot=PDF_COLORS[v.colorIdx].stroke;
+    html+=`<tr>
+      <td><div class="td-name"><div class="td-dot" style="background:${dot}"></div>${v.name}</div></td>
+      <td>${v.w}×${v.h} mm</td><td>${v.qty}</td>
+      <td class="${ok?'td-ok':'td-warn'}">${s.placed} ${ok?'✓':'⚠'}</td>
+      <td class="${ok?'td-ok':'td-warn'}">${ok?'OK':'Partiel'}</td>
+    </tr>`;
+  });
+  if(unplaceable.length){
+    const names=[...new Set(unplaceable.map(u=>u.name))].join(', ');
+    html+=`<tr><td colspan="5" style="color:var(--warn);font-size:10px;padding:8px 11px;">⚠ ${unplaceable.length} visuel(s) non placé(s) — trop grand(s) : ${names}</td></tr>`;
+  }
+  html+=`</tbody></table></div></div>`;
+
+  // Canvas area
+  html+=`<div><div class="plates-sec-hdr">
+    <div class="plates-sec-title">Strip — largeur horizontale · longueur verticale</div>
+    <div class="legend">`;
+  visuels.forEach(v=>{
+    const pc=PDF_COLORS[v.colorIdx];
+    html+=`<div class="legend-item"><div class="legend-sw" style="background:${pc.fill};border:1px solid ${pc.stroke}"></div>${v.name}</div>`;
+  });
+  html+=`</div></div><div id="canvas-area" style="display:flex;flex-wrap:wrap;gap:14px;"></div></div>`;
+
+  document.getElementById('empty-state').classList.add('hidden');
+  document.getElementById('pdf-btn').classList.add('visible');
+  const results=document.getElementById('results');
+  results.classList.remove('hidden');
+  results.innerHTML=html;
+
+  drawAllPlates(plates, pW, 'canvas-area');
+}
+
+/* ── DRAW ── */
+function drawPlateToCanvas(plate, pW, canvasW){
+  const dispH=plate.usedLen||1;
+  const scale=canvasW/pW;
+  const cW=canvasW, cH=Math.max(60,Math.round(dispH*scale));
+  const RW=38, FH=18;
+  const cv=document.createElement('canvas');
+  cv.width=cW+RW; cv.height=cH+FH;
+  const c=cv.getContext('2d');
+
+  const col={bg:'#fff',strip:'#f7f9fd',grid:'#dde5f4',
+    border:'#c8d6ef',rBg:'#f0f4fb',rLine:'#dde5f4',
+    tick:'#8096bb',lbl:'#a0b0cc',fBg:'rgba(240,244,251,.95)',fTxt:'#8096bb'};
+
+  c.fillStyle=col.bg; c.fillRect(0,0,cv.width,cv.height);
+  c.fillStyle=col.strip; c.fillRect(0,0,cW,cH);
+
+  // Grille 100mm
+  const gs=100*scale;
+  c.strokeStyle=col.grid; c.lineWidth=0.5;
+  for(let x=gs;x<cW;x+=gs){c.beginPath();c.moveTo(x,0);c.lineTo(x,cH);c.stroke();}
+  for(let y=gs;y<cH;y+=gs){c.beginPath();c.moveTo(0,y);c.lineTo(cW,y);c.stroke();}
+
+  // Items
+  plate.placed.forEach(p=>{
+    const sx=p.x*scale,sy=p.y*scale,sw=p.w*scale,sh=p.h*scale;
+    const pc=PDF_COLORS[p.item.colorIdx];
+    c.fillStyle=pc.fill; c.fillRect(sx+1,sy+1,sw-2,sh-2);
+    c.strokeStyle=pc.stroke; c.lineWidth=1; c.setLineDash([]);
+    c.strokeRect(sx+1.5,sy+1.5,sw-3,sh-3);
+    if(p.rot){
+      c.strokeStyle='rgba(0,0,0,.1)';
+      c.lineWidth=0.5; c.setLineDash([2,2]);
+      c.beginPath();c.moveTo(sx+2,sy+2);c.lineTo(sx+sw-2,sy+sh-2);c.stroke();
+      c.setLineDash([]);
+    }
+    if(sw>18&&sh>12){
+      const fs=Math.max(6,Math.min(9,Math.round(Math.min(sw,sh)*.15)));
+      c.fillStyle=pc.stroke;
+      c.font=`bold ${fs}px Arial,sans-serif`;
+      c.textAlign='center';c.textBaseline='middle';
+      const lbl=sw>55&&sh>20?p.item.name+(p.rot?' R':''):`${p.item.idx+1}`;
+      c.save();c.beginPath();c.rect(sx+2,sy+2,sw-4,sh-4);c.clip();
+      c.fillText(lbl,sx+sw/2,sy+sh/2);c.restore();
+    }
+  });
+
+  c.strokeStyle=col.border;c.lineWidth=1;c.setLineDash([]);
+  c.strokeRect(.5,.5,cW-1,cH-1);
+
+  // Règle
+  const rx=cW+2;
+  c.fillStyle=col.rBg; c.fillRect(rx,0,RW-2,cH);
+  c.strokeStyle=col.rLine;c.lineWidth=1;
+  c.beginPath();c.moveTo(rx,0);c.lineTo(rx,cH);c.stroke();
+  const ts=Math.max(100,Math.ceil((dispH/8)/100)*100);
+  c.font='7px Arial,sans-serif';
+  for(let mm=0;mm<=dispH;mm+=ts){
+    const ty=Math.round(mm*scale);if(ty>cH)break;
+    c.fillStyle=col.rLine;c.fillRect(rx,ty,4,1);
+    c.fillStyle=col.lbl;
+    c.save();c.translate(rx+RW-4,ty);c.rotate(-Math.PI/2);c.textAlign='center';c.fillText(mm,0,0);c.restore();
+  }
+  c.save();c.translate(rx+RW-4,cH-2);c.rotate(-Math.PI/2);
+  c.textAlign='center';c.fillStyle=col.tick;c.font='7px Arial,sans-serif';
+  c.fillText(dispH+'mm',0,0);c.restore();
+
+  c.fillStyle=col.fBg;c.fillRect(0,cH,cW,FH);
+  c.fillStyle=col.fTxt;c.font='7px Arial,sans-serif';
+  c.textAlign='center';c.textBaseline='middle';
+  c.fillText(`← ${pW} mm →`,cW/2,cH+FH/2);
+
+  return cv;
+}
+
+function drawAllPlates(plates, pW, containerId){
+  const area=document.getElementById(containerId);
+  const availW=area.clientWidth||340;
+  const canvasW=Math.max(180, Math.min(340, availW-20));
+  plates.forEach((plate,pi)=>{
+    const cv=drawPlateToCanvas(plate,pW,canvasW);
+    const wrap=document.createElement('div');
+    const lbl=document.createElement('div');
+    lbl.style.cssText='font-family:IBM Plex Mono,monospace;font-size:8px;color:var(--muted2);letter-spacing:1px;margin-bottom:5px;text-transform:uppercase;font-weight:300;';
+    lbl.textContent=`Strip ${pi+1}/${plates.length} — ${pW}×${Math.round(plate.usedLen)} mm — ${plate.placed.length} visuel(s)`;
+    wrap.appendChild(lbl);wrap.appendChild(cv);
+    area.appendChild(wrap);
+  });
+}
+
+/* ── PDF EXPORT ── */
+async function exportPDF(){
+  if(!lastResult){alert('Calculez d\'abord');return;}
+  const btn=document.getElementById('pdf-btn');
+  btn.textContent='⏳ Génération...';btn.style.opacity='.6';
+
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+  const PW=297,PH=210,M=12;
+  const {plates,unplaceable,pW}=lastResult;
+
+  const totalPlaced=plates.reduce((s,p)=>s+p.placed.length,0);
+  const usedArea=plates.reduce((s,p)=>s+p.placed.reduce((a,r)=>a+r.w*r.h,0),0);
+  const totalLen=plates[0]?.usedLen||0;
+  const stockArea=pW*totalLen;
+  const eff=stockArea>0?Math.round(usedArea/stockArea*100):0;
+
+
+
+  // Couleurs thème blanc/bleu
+  const C={
+    bg:[240,244,251],       // fond bleu très clair
+    surface:[255,255,255],  // blanc pur
+    accent:[26,86,219],     // bleu principal
+    accentLight:[232,239,253],
+    border:[200,214,239],
+    text:[13,26,53],
+    muted:[128,150,187],
+    muted2:[160,176,204],
+    ok:[22,163,74],
+    warn:[224,92,58],
+  };
+
+  // ── Page 1 : résumé ──
+  doc.setFillColor(...C.bg);doc.rect(0,0,PW,PH,'F');
+  // Bande bleue header
+  doc.setFillColor(...C.accent);doc.rect(0,0,PW,8,'F');
+  doc.setTextColor(255,255,255);doc.setFontSize(7);doc.setFont('helvetica','bold');
+  doc.text('CALCUL DE LONGUEUR DE ROULEAU',M,5.5);
+  doc.text(new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'}),PW-M,5.5,{align:'right'});
+
+  // Titre
+  doc.setTextColor(...C.text);doc.setFontSize(20);doc.setFont('helvetica','bold');
+  doc.text('Rapport d\'optimisation',M,22);
+  doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(...C.muted);
+  doc.text('STRIP PACKING 2D — LAIZE FIXE',M,29);
+  doc.text(`Laize : ${pW} mm  ·  ${plates.length} strip  ·  ${totalPlaced} visuels placés`,M,35);
+
+  // Trait séparateur
+  doc.setDrawColor(...C.border);doc.setLineWidth(0.4);
+  doc.line(M,40,PW-M,40);
+
+  // Stat boxes (4 cartes)
+  const stats=[
+    {l:'STRIPS',v:String(plates.length)},
+    {l:'LONGUEUR',v:Math.round(totalLen).toLocaleString('fr-FR')+' mm'},
+    {l:'RENDEMENT',v:eff+'%'},
+    {l:'VISUELS',v:String(totalPlaced)},
+  ];
+  const bW=62,bH=22,bY=44;
+  stats.forEach((s,i)=>{
+    const bx=M+i*(bW+4);
+    doc.setFillColor(...C.surface);doc.setDrawColor(...C.border);doc.setLineWidth(0.4);
+    doc.roundedRect(bx,bY,bW,bH,2,2,'FD');
+    // Liseré bleu gauche
+    doc.setFillColor(...C.accent);doc.rect(bx,bY,1.5,bH,'F');
+    doc.setTextColor(...C.accent);doc.setFontSize(13);doc.setFont('helvetica','bold');
+    doc.text(String(s.v),bx+bW/2+0.75,bY+13,{align:'center'});
+    doc.setTextColor(...C.muted2);doc.setFontSize(5.5);doc.setFont('helvetica','normal');
+    doc.text(s.l,bx+bW/2+0.75,bY+19,{align:'center'});
+  });
+
+  // Dims card
+  const dY=74;
+  doc.setFillColor(...C.surface);doc.setDrawColor(...C.border);doc.setLineWidth(0.4);
+  doc.roundedRect(M,dY,PW-M*2,22,2,2,'FD');
+  doc.setFillColor(...C.accent);doc.rect(M,dY,2.5,22,'F');
+  doc.setTextColor(...C.muted2);doc.setFontSize(6);doc.setFont('helvetica','normal');
+  doc.text('LARGEUR (LAIZE)',M+7,dY+7);
+  doc.text('LONGUEUR NÉCESSAIRE',M+70,dY+7);
+  doc.text('RENDEMENT',M+155,dY+7);
+  doc.text('PERTE',M+205,dY+7);
+  doc.setTextColor(...C.accent);doc.setFontSize(16);doc.setFont('helvetica','bold');
+  doc.text(`${pW.toLocaleString('fr-FR')} mm`,M+7,dY+18);
+  doc.text(`${Math.round(totalLen).toLocaleString('fr-FR')} mm`,M+70,dY+18);
+  doc.setFontSize(14);
+  doc.text(`${eff}%`,M+155,dY+18);
+  doc.setTextColor(...C.warn);
+  doc.text(`${((stockArea-usedArea)/1e6).toFixed(3)} m²`,M+205,dY+18);
+
+  // Table header
+  const tY=104;
+  doc.setFillColor(...C.accentLight);doc.setDrawColor(...C.border);doc.setLineWidth(0.3);
+  doc.rect(M,tY,PW-M*2,7,'FD');
+  doc.setTextColor(...C.muted);doc.setFontSize(5.5);doc.setFont('helvetica','bold');
+  const cols=[M+3,M+60,M+100,M+120,M+175];
+  ['VISUEL','DIMENSIONS','QTÉ','PLACÉS','STATUT'].forEach((h,i)=>doc.text(h,cols[i],tY+4.5));
+
+  const sm={};
+  visuels.forEach(v=>{sm[v.id]={placed:0};});
+  plates.forEach(p=>p.placed.forEach(r=>{sm[r.item.vId].placed++;}));
+
+  let rY=tY+7;
+  visuels.forEach((v,vi)=>{
+    if(rY>PH-20){
+      doc.addPage();
+      doc.setFillColor(...C.bg);doc.rect(0,0,PW,PH,'F');
+      doc.setFillColor(...C.accent);doc.rect(0,0,PW,4,'F');
+      rY=12;
+    }
+    const s=sm[v.id];const ok=s.placed===v.qty;
+    doc.setFillColor(vi%2===0?255:247,vi%2===0?255:249,vi%2===0?255:253);
+    doc.setDrawColor(...C.border);doc.setLineWidth(0.2);
+    doc.rect(M,rY,PW-M*2,6,'FD');
+    const rgb=hexToRgb(PDF_COLORS[v.colorIdx].stroke);
+    doc.setFillColor(rgb.r,rgb.g,rgb.b);doc.circle(cols[0]+1.8,rY+3,1.8,'F');
+    doc.setTextColor(...C.text);doc.setFontSize(6.5);doc.setFont('helvetica','normal');
+    doc.text(v.name,cols[0]+6,rY+4.2);
+    doc.text(`${v.w}×${v.h} mm`,cols[1],rY+4.2);
+    doc.text(String(v.qty),cols[2],rY+4.2);
+    ok?doc.setTextColor(...C.ok):doc.setTextColor(...C.warn);
+    doc.text(String(s.placed),cols[3],rY+4.2);
+    ok?doc.setTextColor(...C.ok):doc.setTextColor(...C.warn);
+    doc.text(ok?'OK ✓':'Partiel',cols[4],rY+4.2);
+    rY+=6;
+  });
+
+  // Pied de page p.1
+  doc.setFillColor(...C.accentLight);doc.setDrawColor(...C.border);doc.setLineWidth(0.3);
+  doc.rect(0,PH-8,PW,8,'FD');
+  doc.setTextColor(...C.muted);doc.setFontSize(6);doc.setFont('helvetica','normal');
+  doc.text('Calculateur de longueur de rouleau — Strip Packing 2D',M,PH-3);
+  doc.text('Page 1 / '+(plates.length+1),PW-M,PH-3,{align:'right'});
+
+  // ── Une page par plaque ──
+  for(let pi=0;pi<plates.length;pi++){
+    doc.addPage();
+    doc.setFillColor(...C.bg);doc.rect(0,0,PW,PH,'F');
+    // Header bande bleue
+    doc.setFillColor(...C.accent);doc.rect(0,0,PW,8,'F');
+    doc.setTextColor(255,255,255);doc.setFontSize(7);doc.setFont('helvetica','bold');
+    doc.text(`STRIP ${pi+1} / ${plates.length}`,M,5.5);
+    doc.text(`${pW} × ${Math.round(plates[pi].usedLen)} mm — ${plates[pi].placed.length} visuel(s)`,PW-M,5.5,{align:'right'});
+
+    const cv=drawPlateToCanvas(plates[pi],pW,700);
+    const img=cv.toDataURL('image/png');
+    const aW=PW-M*2-14,aH=PH-24,asp=cv.width/cv.height;
+    let iW=aW*.72,iH=iW/asp;
+    if(iH>aH){iH=aH;iW=iH*asp;}
+    // Cadre carte autour de l'image
+    doc.setFillColor(...C.surface);doc.setDrawColor(...C.border);doc.setLineWidth(0.4);
+    doc.roundedRect(M-1,9,iW+2,iH+2,1,1,'FD');
+    doc.addImage(img,'PNG',M,10,iW,iH);
+
+    // Légende
+    const lx=M+iW+8;let ly=14;
+    doc.setTextColor(...C.muted);doc.setFontSize(5.5);doc.setFont('helvetica','bold');
+    doc.text('LÉGENDE',lx,ly);ly+=2;
+    doc.setDrawColor(...C.border);doc.setLineWidth(0.3);
+    doc.line(lx,ly,PW-M,ly);ly+=5;
+    const inP=new Map();
+    plates[pi].placed.forEach(r=>{
+      if(!inP.has(r.item.vId))inP.set(r.item.vId,{name:r.item.name,count:0,ci:r.item.colorIdx});
+      inP.get(r.item.vId).count++;
+    });
+    inP.forEach(info=>{
+      if(ly>PH-14)return;
+      const pc=PDF_COLORS[info.ci];
+      const rf=hexToRgb(pc.fill),rs=hexToRgb(pc.stroke);
+      doc.setFillColor(rf.r,rf.g,rf.b);doc.setDrawColor(rs.r,rs.g,rs.b);doc.setLineWidth(0.4);
+      doc.roundedRect(lx,ly-3,5,4,0.5,0.5,'FD');
+      doc.setTextColor(...C.text);doc.setFontSize(6);doc.setFont('helvetica','normal');
+      doc.text(`${info.name} (×${info.count})`,lx+7,ly);ly+=5.5;
+    });
+
+    // Stats plaque
+    const pl=plates[pi];
+    const sU=pl.placed.reduce((a,r)=>a+r.w*r.h,0);
+    const sT=pW*pl.usedLen;
+    const sE=sT>0?Math.round(sU/sT*100):0;
+    // Pied bleu
+    doc.setFillColor(...C.accentLight);doc.setDrawColor(...C.border);doc.setLineWidth(0.3);
+    doc.rect(0,PH-8,PW,8,'FD');
+    doc.setTextColor(...C.muted);doc.setFontSize(6);doc.setFont('helvetica','normal');
+    doc.text(`Rendement : ${sE}%  ·  Utilisé : ${(sU/1e6).toFixed(3)} m²  ·  Perte : ${((sT-sU)/1e6).toFixed(3)} m²`,M,PH-3);
+    doc.text(`Page ${pi+2} / ${plates.length+1}`,PW-M,PH-3,{align:'right'});
+  }
+  doc.save('calculateur-plaques.pdf');
+  btn.textContent='⬇ Export PDF';btn.style.opacity='1';
+}
+
+function hexToRgb(hex){return{r:parseInt(hex.slice(1,3),16),g:parseInt(hex.slice(3,5),16),b:parseInt(hex.slice(5,7),16)};}
+
+/* ── DEFAULT DATA ── */
+const DEFAULT=[
+  {w:1000,h:1000,qty:1,name:'Visuel #1'}
+  /*POUR TESTER
+  ,{w:585,h:320,qty:2,name:'Visuel 2'},
+  {w:710,h:960,qty:1,name:'Visuel 3'},{w:460,h:960,qty:1,name:'Visuel 4'},
+  {w:460,h:855,qty:1,name:'Visuel 5'},{w:565,h:310,qty:2,name:'Visuel 6'},
+  {w:485,h:310,qty:1,name:'Visuel 7'},{w:705,h:1485,qty:2,name:'Visuel 8'},
+  {w:835,h:480,qty:2,name:'Visuel 9'},{w:765,h:1480,qty:2,name:'Visuel 10'},
+  {w:750,h:1510,qty:1,name:'Visuel 11'},{w:895,h:480,qty:2,name:'Visuel 12'},
+  {w:745,h:895,qty:1,name:'Visuel 13'},{w:705,h:1485,qty:2,name:'Visuel 14'},
+  {w:835,h:480,qty:2,name:'Visuel 15'},{w:705,h:725,qty:2,name:'Visuel 16'},
+  {w:835,h:480,qty:2,name:'Visuel 17'},{w:885,h:725,qty:2,name:'Visuel 18'},
+  {w:2110,h:905,qty:1,name:'Visuel 19'},{w:605,h:630,qty:2,name:'Visuel 20'},
+  {w:735,h:625,qty:2,name:'Visuel 21'},{w:655,h:630,qty:3,name:'Visuel 22'},
+  {w:785,h:625,qty:3,name:'Visuel 23'},{w:605,h:630,qty:2,name:'Visuel 24'},
+  {w:735,h:625,qty:2,name:'Visuel 25'},{w:605,h:630,qty:4,name:'Visuel 26'},
+  {w:735,h:625,qty:4,name:'Visuel 27'},*/
+];
+DEFAULT.forEach(d=>addVisuel(d.w,d.h,d.qty,d.name));
+</script>
+</body>
+</html>
