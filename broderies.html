@@ -94,7 +94,7 @@ header{
   text-transform:uppercase;font-weight:500;
 }
 
-.pdf-btn{
+.pdf-btn,.back-btn{
   font-family:'JetBrains Mono',monospace;
   font-size:9px;letter-spacing:2px;
   color:var(--paper);
@@ -105,12 +105,12 @@ header{
   display:none;
   box-shadow:0 3px 12px rgba(200,90,63,0.3);
 }
-.pdf-btn:hover{
+.pdf-btn:hover,.back-btn:hover{
   background:#b04c32;
   box-shadow:0 6px 20px rgba(200,90,63,0.45);
   transform:translateY(-2px);
 }
-.pdf-btn.visible{display:block;}
+.pdf-btn.visible,.back-btn{display:block;}
 
 @media(max-width:720px){
   header{padding:16px 20px;flex-direction:column;align-items:flex-start;gap:12px;}
@@ -526,6 +526,7 @@ header{
     </div>
     <div class="header-right">
       <div class="hbadge">v2.1</div>
+      <button class="back-btn visible" onclick="window.location.href ='./index.html'">👈 accueil</button>
       <button class="pdf-btn" id="pdf-btn" onclick="exportPDF()">⬇ Export PDF</button>
     </div>
   </header>
