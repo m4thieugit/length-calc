@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Programme de Production Broderie</title>
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@300;400;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{
+  --ink:#0a0e1a;
+  --paper:#fdfbf7;
+  --cream:#f5f1e8;
+  --sand:#e8dcc8;
+  --rust:#c85a3f;
+  --rust-dim:rgba(200,90,63,0.12);
+  --rust-light:#f4e4df;
+  --teal:#2d6d68;
+  --teal-dim:rgba(45,109,104,0.08);
+  --teal-light:#dae8e7;
+  --slate:#546e7a;
+  --slate-light:#b8c5cb;
+  --gold:#d4a574;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:'Crimson Pro',serif;
+  font-weight:400;
+  min-height:100vh;
+  position:relative;
+}
+
+/* Texture papier vintage */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  pointer-events:none;z-index:0;
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(200,90,63,0.02) 2px, rgba(200,90,63,0.02) 4px),
+    repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(45,109,104,0.015) 2px, rgba(45,109,104,0.015) 4px);
+  opacity:0.6;
+}
+
+body::after{
+  content:'';
+  position:fixed;inset:0;
+  pointer-events:none;z-index:1;
+  background:radial-gradient(circle at 30% 20%, rgba(212,165,116,0.05), transparent 60%),
+              radial-gradient(circle at 80% 70%, rgba(45,109,104,0.04), transparent 50%);
+}
+
+.page{position:relative;z-index:2;display:grid;grid-template-rows:auto 1fr;min-height:100vh;}
+
+/* HEADER */
+header{
+  border-bottom:2px solid var(--sand);
+  padding:20px 32px;
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(253,251,247,0.95);
+  backdrop-filter:blur(12px);
+  position:sticky;top:0;z-index:100;
+  box-shadow:0 4px 24px rgba(10,14,26,0.06);
+}
+
+.logo{display:flex;flex-direction:column;gap:6px;}
+.logo h1{
+  font-size:28px;
+  font-weight:700;
+  letter-spacing:-0.02em;
+  color:var(--ink);
+  line-height:1;
+}
+.logo h1 em{font-style:normal;color:var(--rust);}
+.logo-sub{
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;letter-spacing:4px;
+  color:var(--slate);text-transform:uppercase;
+  font-weight:400;
+  opacity:0.7;
+}
+
+.header-right{display:flex;align-items:center;gap:14px;}
+
+.hbadge{
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;letter-spacing:2px;
+  color:var(--teal);
+  border:1.5px solid var(--teal);
+  background:var(--teal-light);
+  padding:6px 14px;border-radius:24px;
+  text-transform:uppercase;font-weight:500;
+}
+
+.pdf-btn{
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;letter-spacing:2px;
+  color:var(--paper);
+  background:var(--rust);
+  border:none;padding:8px 18px;border-radius:24px;
+  text-transform:uppercase;cursor:pointer;font-weight:500;
+  transition:all .25s cubic-bezier(.4,0,.2,1);
+  display:none;
+  box-shadow:0 3px 12px rgba(200,90,63,0.3);
+}
+.pdf-btn:hover{
+  background:#b04c32;
+  box-shadow:0 6px 20px rgba(200,90,63,0.45);
+  transform:translateY(-2px);
+}
+.pdf-btn.visible{display:block;}
+
+@media(max-width:720px){
+  header{padding:16px 20px;flex-direction:column;align-items:flex-start;gap:12px;}
+  .logo h1{font-size:22px;}
+  .logo-sub{font-size:8px;letter-spacing:3px;}
+  .hbadge{display:none;}
+}
+
+/* LAYOUT */
+.main{display:grid;grid-template-columns:420px 1fr;min-height:calc(100vh - 90px);}
+
+@media(max-width:1024px){
+  .main{grid-template-columns:1fr;min-height:unset;}
+}
+
+/* SIDEBAR */
+.sidebar{
+  border-right:2px solid var(--sand);
+  display:flex;flex-direction:column;
+  overflow-y:auto;
+  max-height:calc(100vh - 90px);
+  position:sticky;top:90px;
+  background:var(--cream);
+}
+
+@media(max-width:1024px){
+  .sidebar{
+    position:static;
+    max-height:none;
+    overflow-y:visible;
+    border-right:none;
+    border-bottom:2px solid var(--sand);
+  }
+}
+
+.sb-sec{
+  border-bottom:1.5px solid var(--sand);
+  padding:24px 26px;
+}
+
+.slabel{
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;letter-spacing:3px;text-transform:uppercase;
+  color:var(--rust);margin-bottom:16px;
+  display:flex;align-items:center;gap:12px;
+  font-weight:600;
+}
+.slabel::after{content:'';flex:1;height:1px;background:var(--sand);}
+
+/* FIELDS */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+
+.field{display:flex;flex-direction:column;gap:7px;}
+.field label{
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;color:var(--slate);
+  letter-spacing:1.5px;text-transform:uppercase;font-weight:500;
+}
+.field input,.field select{
+  background:var(--paper);
+  border:1.5px solid var(--sand);
+  color:var(--ink);
+  font-family:'JetBrains Mono',monospace;
+  font-size:14px;font-weight:400;
+  padding:10px 12px;border-radius:8px;
+  outline:none;transition:all .2s;width:100%;
+}
+.field input:focus,.field select:focus{
+  border-color:var(--rust);
+  box-shadow:0 0 0 4px var(--rust-dim);
+  background:#fff;
+}
+.field input::placeholder{color:var(--slate-light);font-size:12px;}
+
+.field-note{
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;color:var(--teal);margin-top:2px;font-weight:400;
+}
+
+/* IMAGE UPLOAD */
+.img-upload{
+  display:flex;flex-direction:column;gap:12px;
+  background:var(--paper);
+  border:2px dashed var(--sand);
+  border-radius:12px;
+  padding:20px;
+  text-align:center;
+  cursor:pointer;
+  transition:all .25s;
+  position:relative;
+  overflow:hidden;
+}
+.img-upload:hover{
+  border-color:var(--rust);
+  background:rgba(255,255,255,0.6);
+}
+.img-upload.has-image{
+  border-style:solid;
+  border-color:var(--teal);
+  background:rgba(255,255,255,0.8);
+}
+.upload-label{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;letter-spacing:2px;
+  color:var(--slate);text-transform:uppercase;
+  font-weight:500;
+}
+.upload-preview{
+  max-width:100%;
+  max-height:200px;
+  border-radius:8px;
+  display:none;
+  margin:0 auto;
+  box-shadow:0 4px 16px rgba(10,14,26,0.1);
+}
+.upload-preview.visible{display:block;}
+.upload-info{
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;
+  color:var(--teal);
+  display:none;
+}
+.upload-info.visible{display:block;}
+#fileInput{display:none;}
+
+/* PROJETS LIST */
+.projets-list{display:flex;flex-direction:column;gap:10px;}
+.prow{
+  background:var(--paper);
+  border:1.5px solid var(--sand);
+  border-radius:10px;overflow:hidden;
+  transition:all .25s;
+}
+.prow:hover{
+  box-shadow:0 4px 20px rgba(10,14,26,0.08);
+  border-color:var(--rust);
+}
+.prow-head{display:flex;align-items:center;padding:12px 14px;gap:10px;}
+.pdot{width:10px;height:10px;border-radius:50%;flex-shrink:0;background:var(--rust);}
+.pname{
+  flex:1;background:transparent;border:none;
+  color:var(--ink);
+  font-family:'Crimson Pro',serif;
+  font-size:15px;font-weight:600;
+  outline:none;cursor:pointer;min-width:0;
+}
+.pname:focus{cursor:text;}
+.psummary{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;color:var(--slate);white-space:nowrap;font-weight:400;
+}
+.pdel{
+  background:none;border:none;color:var(--slate-light);
+  cursor:pointer;font-size:13px;
+  padding:4px 8px;border-radius:6px;
+  transition:all .2s;flex-shrink:0;
+}
+.pdel:hover{color:var(--rust);background:var(--rust-dim);}
+.pfields{padding:12px 14px 16px;border-top:1.5px solid var(--sand);}
+
+.add-btn{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  width:100%;padding:12px;
+  background:transparent;
+  border:2px dashed var(--sand);
+  color:var(--slate);
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;letter-spacing:1.5px;
+  cursor:pointer;border-radius:10px;
+  transition:all .25s;margin-top:10px;font-weight:500;
+}
+.add-btn:hover{
+  border-color:var(--teal);
+  color:var(--teal);
+  background:var(--teal-dim);
+}
+
+.calc-btn{
+  margin:20px 26px 26px;
+  padding:16px;
+  background:var(--rust);
+  color:var(--paper);border:none;
+  font-family:'Crimson Pro',serif;
+  font-weight:700;font-size:13px;
+  letter-spacing:5px;text-transform:uppercase;
+  cursor:pointer;border-radius:10px;
+  transition:all .3s cubic-bezier(.4,0,.2,1);
+  box-shadow:0 4px 16px rgba(200,90,63,0.35);
+}
+.calc-btn:hover{
+  background:#b04c32;
+  transform:translateY(-2px);
+  box-shadow:0 8px 24px rgba(200,90,63,0.5);
+}
+.calc-btn:active{transform:translateY(0);}
+
+/* RESULTS */
+.results{
+  padding:32px;
+  display:flex;flex-direction:column;gap:28px;
+}
+
+.res-empty{
+  text-align:center;
+  padding:60px 20px;
+  color:var(--slate);
+}
+.res-empty-icon{
+  font-size:64px;margin-bottom:20px;
+  opacity:0.3;
+}
+.res-empty-text{
+  font-family:'Crimson Pro',serif;
+  font-size:18px;font-weight:400;
+  color:var(--slate);
+}
+
+.res-header{
+  display:flex;align-items:flex-start;justify-content:space-between;
+  gap:20px;
+  padding-bottom:20px;
+  border-bottom:2px solid var(--sand);
+}
+
+.res-title{
+  font-family:'Crimson Pro',serif;
+  font-size:32px;font-weight:700;
+  color:var(--ink);
+  line-height:1.2;
+  letter-spacing:-0.02em;
+}
+
+.res-meta{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;
+  color:var(--slate);
+  margin-top:8px;
+  letter-spacing:1px;
+}
+
+/* STATS CARDS */
+.stats-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:16px;
+}
+
+.stat-card{
+  background:linear-gradient(135deg, var(--paper) 0%, var(--cream) 100%);
+  border:1.5px solid var(--sand);
+  border-radius:12px;
+  padding:20px;
+  position:relative;
+  overflow:hidden;
+  transition:all .25s;
+}
+
+.stat-card::before{
+  content:'';
+  position:absolute;
+  top:0;left:0;
+  width:4px;height:100%;
+  background:var(--rust);
+}
+
+.stat-card:nth-child(2)::before{background:var(--teal);}
+.stat-card:nth-child(3)::before{background:var(--gold);}
+.stat-card:nth-child(4)::before{background:var(--slate);}
+
+.stat-card:hover{
+  box-shadow:0 8px 24px rgba(10,14,26,0.12);
+  transform:translateY(-2px);
+}
+
+.stat-label{
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;letter-spacing:2px;
+  text-transform:uppercase;
+  color:var(--slate);
+  margin-bottom:10px;
+  font-weight:500;
+}
+
+.stat-value{
+  font-family:'Crimson Pro',serif;
+  font-size:32px;font-weight:700;
+  color:var(--ink);
+  line-height:1;
+}
+
+.stat-unit{
+  font-size:16px;
+  color:var(--slate);
+  margin-left:4px;
+  font-weight:400;
+}
+
+/* PROJETS TABLE */
+.projets-table{
+  background:var(--paper);
+  border:1.5px solid var(--sand);
+  border-radius:12px;
+  overflow:hidden;
+}
+
+.table-header{
+  background:var(--cream);
+  border-bottom:1.5px solid var(--sand);
+  padding:14px 20px;
+  display:grid;
+  grid-template-columns:2fr 1fr 1.2fr 1.2fr 0.8fr 0.8fr;
+  gap:16px;
+}
+
+.th{
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;letter-spacing:2px;
+  text-transform:uppercase;
+  color:var(--slate);
+  font-weight:600;
+}
+
+.table-row{
+  padding:16px 20px;
+  display:grid;
+  grid-template-columns:2fr 1fr 1.2fr 1.2fr 0.8fr 0.8fr;
+  gap:16px;
+  border-bottom:1px solid var(--sand);
+  align-items:center;
+  transition:background .2s;
+}
+
+.table-row:last-child{border-bottom:none;}
+.table-row:hover{background:rgba(200,90,63,0.03);}
+
+.td{
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px;
+  color:var(--ink);
+  font-weight:400;
+}
+
+.td-name{
+  font-family:'Crimson Pro',serif;
+  font-size:15px;
+  font-weight:600;
+  color:var(--ink);
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.td-dot{
+  width:8px;height:8px;
+  border-radius:50%;
+  background:var(--rust);
+  flex-shrink:0;
+}
+
+@media(max-width:900px){
+  .table-header,.table-row{
+    grid-template-columns:1fr;
+    gap:8px;
+  }
+  .th{text-align:left;}
+}
+
+/* CANVAS */
+.canvas-container{
+  background:var(--paper);
+  border:1.5px solid var(--sand);
+  border-radius:12px;
+  padding:24px;
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+
+.canvas-title{
+  font-family:'Crimson Pro',serif;
+  font-size:20px;
+  font-weight:600;
+  color:var(--ink);
+  padding-bottom:12px;
+  border-bottom:1px solid var(--sand);
+}
+
+#previewCanvas{
+  max-width:100%;
+  border-radius:8px;
+  box-shadow:0 4px 20px rgba(10,14,26,0.1);
+  background:#fff;
+}
+
+.canvas-info{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;
+  color:var(--slate);
+  padding:12px;
+  background:var(--cream);
+  border-radius:6px;
+  border-left:3px solid var(--teal);
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <div class="logo">
+      <h1><em>Atelier</em> Broderie</h1>
+      <div class="logo-sub">Programme Production</div>
+    </div>
+    <div class="header-right">
+      <div class="hbadge">v2.1</div>
+      <button class="pdf-btn" id="pdf-btn" onclick="exportPDF()">⬇ Export PDF</button>
+    </div>
+  </header>
+
+  <div class="main">
+    <div class="sidebar">
+      <!-- LOGO UPLOAD -->
+      <div class="sb-sec">
+        <div class="slabel">Import Logo</div>
+        <div class="img-upload" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+          <input type="file" id="fileInput" accept="image/*" onchange="handleImageUpload(event)">
+          <div class="upload-label">📁 Cliquez pour importer</div>
+          <img id="uploadPreview" class="upload-preview" alt="Aperçu">
+          <div id="uploadInfo" class="upload-info"></div>
+        </div>
+      </div>
+
+      <!-- FORMAT CASQUETTE -->
+      <div class="sb-sec">
+        <div class="slabel">Format Casquette</div>
+        <div class="field">
+          <label>Format broderie</label>
+          <select id="formatCasquette" onchange="updateFormatCasquette()">
+            <option value="140">Standard 140×140 mm</option>
+            <option value="320">Large 320×320 mm</option>
+          </select>
+        </div>
+        <div class="field-note" style="margin-top:8px;">
+          📏 Les projets s'adapteront automatiquement à ce format
+        </div>
+      </div>
+
+      <!-- PARAMETRES MACHINE HCR3-1504 -->
+      <div class="sb-sec">
+        <div class="slabel">HCR3-1504 HappyJapan</div>
+        <div class="field" style="margin-bottom:12px;">
+          <label>Type de support</label>
+          <select id="typeSupport" onchange="updateVitesseSupport()">
+            <option value="cap">Casquette (1000 pts/min)</option>
+            <option value="flat" selected>Textile plat (1100 pts/min)</option>
+          </select>
+        </div>
+        <div class="grid2">
+          <div class="field">
+            <label>Vitesse machine</label>
+            <input type="text" id="vitesseDisplay" value="1000 pts/min" disabled style="opacity:0.7;cursor:not-allowed;background:var(--cream);">
+            <input type="hidden" id="vitesse" value="1000">
+          </div>
+          <div class="field">
+            <label>Têtes actives (4 max)</label>
+            <select id="nbTetes">
+              <option value="1">1 tête</option>
+              <option value="2">2 têtes</option>
+              <option value="3">3 têtes</option>
+              <option value="4" selected>4 têtes</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid2" style="margin-top:12px;">
+          <div class="field">
+            <label>Densité (pts/cm)</label>
+            <input type="number" id="densite" value="45" min="30" max="60">
+          </div>
+          <div class="field">
+            <label>Aiguilles (15 max)</label>
+            <input type="number" id="nbCouleurs" value="6" min="1" max="15">
+          </div>
+        </div>
+        <div class="grid2" style="margin-top:12px;">
+          <div class="field">
+            <label>Type point</label>
+            <select id="typePoint">
+              <option value="1.0">Satin (normal)</option>
+              <option value="1.3">Plein (dense)</option>
+              <option value="0.7">Léger (fin)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Temps changement</label>
+            <input type="number" id="tempsChangement" value="15" min="5" max="60" step="5">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--slate);margin-top:2px;">sec/couleur</div>
+          </div>
+        </div>
+        <div class="field-note" style="margin-top:8px;">
+          🏭 Zone casquette: 358×79mm • Textile: 358×450mm • 15 aiguilles
+        </div>
+      </div>
+
+      <!-- PROJETS BRODERIE -->
+      <div class="sb-sec">
+        <div class="slabel">Projets Broderie</div>
+        <div class="projets-list" id="projets-list"></div>
+        <button class="add-btn" onclick="addProjet()">+ Ajouter un projet</button>
+      </div>
+
+      <button class="calc-btn" onclick="calculer()">Calculer Production</button>
+    </div>
+
+    <div class="results" id="results">
+      <div class="res-empty">
+        <div class="res-empty-icon">🧵</div>
+        <div class="res-empty-text">Importez un logo et ajoutez des projets pour commencer</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── GLOBAL STATE ──
+let projets=[];
+let projetId=0;
+let logoImage=null;
+let logoData=null;
+let lastResult=null;
+
+const COLORS=['#c85a3f','#2d6d68','#d4a574','#546e7a','#8b6f47','#4a7c7e','#b85a42','#5d7c6f'];
+
+// ── MACHINE HCR3-1504 ──
+function updateVitesseSupport(){
+  const type=document.getElementById('typeSupport').value;
+  const vitesse=type==='flat'?1100:1000;
+  document.getElementById('vitesse').value=vitesse;
+  document.getElementById('vitesseDisplay').value=vitesse+' pts/min';
+}
+
+// ── IMAGE UPLOAD ──
+function handleImageUpload(e){
+  const file=e.target.files[0];
+  if(!file)return;
+  
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    const img=new Image();
+    img.onload=function(){
+      logoImage=img;
+      
+      // Analyser le logo pour calculer la surface réelle
+      const canvas=document.createElement('canvas');
+      canvas.width=img.width;
+      canvas.height=img.height;
+      const ctx=canvas.getContext('2d');
+      ctx.drawImage(img,0,0);
+      
+      const imageData=ctx.getImageData(0,0,img.width,img.height);
+      const pixels=imageData.data;
+      let pixelsRemplis=0;
+      const totalPixels=img.width*img.height;
+      
+      // Compter les pixels non-blancs et non-transparents
+      for(let i=0;i<pixels.length;i+=4){
+        const r=pixels[i];
+        const g=pixels[i+1];
+        const b=pixels[i+2];
+        const a=pixels[i+3];
+        
+        // Si le pixel n'est pas blanc (RGB>240) et pas transparent (alpha>50)
+        if(a>50 && (r<240 || g<240 || b<240)){
+          pixelsRemplis++;
+        }
+      }
+      
+      const tauxRemplissage=(pixelsRemplis/totalPixels*100).toFixed(1);
+      
+      logoData={
+        width:img.width,
+        height:img.height,
+        name:file.name,
+        size:(file.size/1024).toFixed(1),
+        pixelsRemplis,
+        totalPixels,
+        tauxRemplissage
+      };
+      
+      const preview=document.getElementById('uploadPreview');
+      preview.src=ev.target.result;
+      preview.classList.add('visible');
+      
+      const info=document.getElementById('uploadInfo');
+      info.innerHTML=`${logoData.name} • ${logoData.width}×${logoData.height}px<br>Surface brodée: ${tauxRemplissage}% (${logoData.size} KB)`;
+      info.classList.add('visible');
+      
+      document.getElementById('uploadArea').classList.add('has-image');
+      
+      // Auto-ajuster densité selon taille
+      const avgSize=(img.width+img.height)/2;
+      if(avgSize<300){
+        document.getElementById('densite').value=60;
+      }else if(avgSize>800){
+        document.getElementById('densite').value=35;
+      }else{
+        document.getElementById('densite').value=45;
+      }
+    };
+    img.src=ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── PROJETS ──
+function addProjet(data={}){
+  const id=++projetId;
+  const format=+document.getElementById('formatCasquette').value;
+  const p={
+    id,
+    nom:data.nom||`Projet #${id}`,
+    largeur:data.largeur||format,
+    hauteur:data.hauteur||format,
+    quantite:data.quantite||1,
+    colorIdx:projets.length%COLORS.length
+  };
+  projets.push(p);
+  renderProjets();
+}
+
+function updateFormatCasquette(){
+  const format=+document.getElementById('formatCasquette').value;
+  // Mettre à jour tous les projets existants
+  projets.forEach(p=>{
+    p.largeur=format;
+    p.hauteur=format;
+  });
+  renderProjets();
+  
+  // Ajuster la densité selon le format
+  if(format===140){
+    document.getElementById('densite').value=50;
+  }else{
+    document.getElementById('densite').value=35;
+  }
+}
+
+function deleteProjet(id){
+  projets=projets.filter(p=>p.id!==id);
+  renderProjets();
+}
+
+function updateProjet(id,field,value){
+  const p=projets.find(p=>p.id===id);
+  if(p)p[field]=value;
+}
+
+function renderProjets(){
+  const list=document.getElementById('projets-list');
+  list.innerHTML='';
+  
+  const format=+document.getElementById('formatCasquette').value;
+  
+  projets.forEach(p=>{
+    const div=document.createElement('div');
+    div.className='prow';
+    div.innerHTML=`
+      <div class="prow-head">
+        <div class="pdot" style="background:${COLORS[p.colorIdx]}"></div>
+        <input class="pname" value="${p.nom}" onchange="updateProjet(${p.id},'nom',this.value)">
+        <span class="psummary">${format}×${format}mm 🧢</span>
+        <button class="pdel" onclick="deleteProjet(${p.id})">✕</button>
+      </div>
+      <div class="pfields">
+        <div class="grid3">
+          <div class="field">
+            <label>Format fixe</label>
+            <input type="text" value="${format}×${format} mm" disabled style="opacity:0.6;cursor:not-allowed;">
+          </div>
+          <div class="field">
+            <label>Quantité</label>
+            <input type="number" value="${p.quantite}" min="1" onchange="updateProjet(${p.id},'quantite',+this.value)">
+          </div>
+          <div class="field">
+            <label>Surface</label>
+            <input type="text" value="${(format*format/100).toFixed(0)} cm²" disabled style="opacity:0.6;cursor:not-allowed;">
+          </div>
+        </div>
+      </div>
+    `;
+    list.appendChild(div);
+  });
+}
+
+// ── CALCULS BRODERIE ──
+function calculer(){
+  if(!logoImage){
+    alert('Veuillez d\'abord importer un logo');
+    return;
+  }
+  if(projets.length===0){
+    alert('Veuillez ajouter au moins un projet');
+    return;
+  }
+  
+  const vitesse=+document.getElementById('vitesse').value;
+  const densite=+document.getElementById('densite').value;
+  const typePoint=+document.getElementById('typePoint').value;
+  const nbCouleurs=+document.getElementById('nbCouleurs').value;
+  const format=+document.getElementById('formatCasquette').value;
+  const nbTetes=+document.getElementById('nbTetes').value;
+  const tempsChangementSec=+document.getElementById('tempsChangement').value;
+  
+  // Calculer le facteur d'échelle du logo pour s'adapter au format carré
+  const logoRatio=logoImage.width/logoImage.height;
+  let logoFinalW,logoFinalH;
+  
+  if(logoRatio>1){
+    // Logo plus large que haut
+    logoFinalW=format;
+    logoFinalH=format/logoRatio;
+  }else{
+    // Logo plus haut que large (ou carré)
+    logoFinalH=format;
+    logoFinalW=format*logoRatio;
+  }
+  
+  const surfaceLogomm2=logoFinalW*logoFinalH;
+  
+  // Calculer pour chaque projet
+  const resultats=projets.map(p=>{
+    const surfaceMm2=format*format; // Surface totale disponible
+    const surfaceLogomm2=logoFinalW*logoFinalH; // Surface du cadre du logo
+    
+    // CALCUL DE LA SURFACE RÉELLEMENT BRODÉE
+    // On utilise le taux de remplissage du logo analysé
+    const surfaceReelleBrodeeMm2=surfaceLogomm2*(logoData.tauxRemplissage/100);
+    const surfaceReelleCm2=surfaceReelleBrodeeMm2/100;
+    
+    // Nombre de points basé sur la VRAIE surface à broder
+    const nbPointsBase=Math.round(surfaceReelleCm2*densite*densite*typePoint);
+    const nbPointsTotal=nbPointsBase*p.quantite;
+    
+    // TEMPS DE BRODERIE SIMPLE
+    // Temps pour 1 pièce = nbPoints / vitesse (en minutes)
+    const tempsPar1Piece=nbPointsBase/vitesse;
+    
+    // AVEC PLUSIEURS TÊTES : les pièces sont brodées EN PARALLÈLE
+    // Ex: 10 pièces avec 4 têtes = 3 lots (4+4+2)
+    // Chaque lot prend le même temps qu'une pièce
+    const nbLots=Math.ceil(p.quantite/nbTetes);
+    const tempsBroderieMin=tempsPar1Piece*nbLots;
+    
+    // Changements de couleur (par lot, pas par pièce)
+    const tempsChangementMin=(tempsChangementSec/60)*nbCouleurs*nbLots;
+    
+    // Temps de préparation (chargement/déchargement des cadres par lot)
+    const tempsPrepMin=2*nbLots;
+    
+    // TEMPS TOTAL
+    const tempsTotalMin=tempsBroderieMin+tempsChangementMin+tempsPrepMin;
+    const tempsTotalH=Math.floor(tempsTotalMin/60);
+    const tempsTotalM=Math.round(tempsTotalMin%60);
+    
+    // Détail du temps de broderie seul (sans changements)
+    const tempsBrodH=Math.floor(tempsBroderieMin/60);
+    const tempsBrodM=Math.round(tempsBroderieMin%60);
+    
+    // Consommation fil (estimation: 1 point ≈ 0.4mm fil)
+    const filMm=nbPointsTotal*0.4;
+    const filMetres=(filMm/1000).toFixed(1);
+    
+    // Taux de couverture (% du format utilisé par le logo)
+    const tauxCouverture=((surfaceLogomm2/surfaceMm2)*100).toFixed(1);
+    
+    return{
+      ...p,
+      nbPoints:nbPointsBase,
+      nbPointsTotal,
+      tempsTotalH,
+      tempsTotalM,
+      tempsBrodH,
+      tempsBrodM,
+      tempsBroderieMin:tempsBroderieMin.toFixed(1),
+      tempsChangementMin:tempsChangementMin.toFixed(1),
+      tempsPrepMin:tempsPrepMin.toFixed(1),
+      nbLots,
+      filMetres,
+      logoFinalW:logoFinalW.toFixed(1),
+      logoFinalH:logoFinalH.toFixed(1),
+      surfaceReelleCm2:surfaceReelleCm2.toFixed(1),
+      tauxCouverture
+    };
+  });
+  
+  // Stats globales
+  const totalPoints=resultats.reduce((s,r)=>s+r.nbPointsTotal,0);
+  const totalMinutes=resultats.reduce((s,r)=>s+(r.tempsTotalH*60+r.tempsTotalM),0);
+  const totalHeures=Math.floor(totalMinutes/60);
+  const totalMin=Math.round(totalMinutes%60);
+  const totalFil=resultats.reduce((s,r)=>s+parseFloat(r.filMetres),0).toFixed(1);
+  const totalPieces=resultats.reduce((s,r)=>s+r.quantite,0);
+  const totalLots=resultats.reduce((s,r)=>s+r.nbLots,0);
+  
+  lastResult={
+    resultats,
+    stats:{
+      totalPoints,
+      totalHeures,
+      totalMin,
+      totalFil,
+      totalPieces,
+      totalLots,
+      nbCouleurs,
+      nbTetes,
+      vitesse,
+      densite,
+      format,
+      logoFinalW:logoFinalW.toFixed(1),
+      logoFinalH:logoFinalH.toFixed(1)
+    }
+  };
+  
+  renderResults();
+  document.getElementById('pdf-btn').classList.add('visible');
+}
+
+// ── AFFICHAGE RESULTATS ──
+function renderResults(){
+  if(!lastResult)return;
+  
+  const{resultats,stats}=lastResult;
+  const resDiv=document.getElementById('results');
+  
+  resDiv.innerHTML=`
+    <div class="res-header">
+      <div>
+        <div class="res-title">Programme de Production</div>
+        <div class="res-meta">
+          ${new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
+          • ${projets.length} projet(s) • ${stats.totalPieces} pièce(s)
+        </div>
+      </div>
+    </div>
+    
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Points</div>
+        <div class="stat-value">${(stats.totalPoints/1000).toFixed(1)}<span class="stat-unit">K</span></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Temps Broderie</div>
+        <div class="stat-value">${stats.totalHeures}h${stats.totalMin.toString().padStart(2,'0')}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Fil Nécessaire</div>
+        <div class="stat-value">${stats.totalFil}<span class="stat-unit">m</span></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Surface Brodée</div>
+        <div class="stat-value">${logoData.tauxRemplissage}<span class="stat-unit">%</span></div>
+      </div>
+    </div>
+    
+    <div class="projets-table">
+      <div class="table-header">
+        <div class="th">Projet</div>
+        <div class="th">Points</div>
+        <div class="th">Lots</div>
+        <div class="th">Temps Broderie</div>
+        <div class="th">Temps Total</div>
+        <div class="th">Fil (m)</div>
+      </div>
+      ${resultats.map(r=>`
+        <div class="table-row">
+          <div class="td-name">
+            <div class="td-dot" style="background:${COLORS[r.colorIdx]}"></div>
+            ${r.nom} (×${r.quantite})
+          </div>
+          <div class="td">${(r.nbPointsTotal/1000).toFixed(1)}K</div>
+          <div class="td">${r.nbLots}</div>
+          <div class="td">${r.tempsBrodH}h${r.tempsBrodM.toString().padStart(2,'0')}</div>
+          <div class="td">${r.tempsTotalH}h${r.tempsTotalM.toString().padStart(2,'0')}</div>
+          <div class="td">${r.filMetres}m</div>
+        </div>
+      `).join('')}
+    </div>
+    
+    <div class="canvas-container">
+      <div class="canvas-title">Aperçu Broderie</div>
+      <canvas id="previewCanvas"></canvas>
+      <div class="canvas-info">
+        📐 Logo adapté: ${stats.logoFinalW}×${stats.logoFinalH}mm (format ${stats.format}×${stats.format}mm) • 
+        Surface brodée réelle: ${logoData.tauxRemplissage}% du logo (${logoData.pixelsRemplis.toLocaleString()} pixels pleins) • 
+        Densité: ${stats.densite} pts/cm • 
+        Vitesse: ${stats.vitesse} pts/min • 
+        ${stats.nbCouleurs} couleur(s) • 
+        ${stats.nbTetes} tête(s)
+      </div>
+    </div>
+  `;
+  
+  drawPreview();
+}
+
+// ── CANVAS PREVIEW ──
+function drawPreview(){
+  const canvas=document.getElementById('previewCanvas');
+  if(!canvas||!logoImage||!lastResult)return;
+  
+  const ctx=canvas.getContext('2d');
+  const format=+document.getElementById('formatCasquette').value;
+  const{logoFinalW,logoFinalH}=lastResult.stats;
+  
+  // Canvas size (échelle pour affichage)
+  const scale=2; // 2px = 1mm pour bon affichage
+  const canvasSize=format*scale;
+  canvas.width=canvasSize;
+  canvas.height=canvasSize;
+  
+  // Fond casquette
+  ctx.fillStyle='#fdfbf7';
+  ctx.fillRect(0,0,canvasSize,canvasSize);
+  
+  // Cadre format casquette
+  ctx.strokeStyle='#e8dcc8';
+  ctx.lineWidth=3;
+  ctx.strokeRect(0,0,canvasSize,canvasSize);
+  
+  // Grille légère pour visualiser l'espace
+  ctx.strokeStyle='#f5f1e8';
+  ctx.lineWidth=1;
+  const gridStep=20*scale; // 20mm
+  for(let i=gridStep;i<canvasSize;i+=gridStep){
+    ctx.beginPath();
+    ctx.moveTo(i,0);
+    ctx.lineTo(i,canvasSize);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0,i);
+    ctx.lineTo(canvasSize,i);
+    ctx.stroke();
+  }
+  
+  // Dimensions du logo en pixels
+  const logoW=parseFloat(logoFinalW)*scale;
+  const logoH=parseFloat(logoFinalH)*scale;
+  
+  // Centrer le logo
+  const offsetX=(canvasSize-logoW)/2;
+  const offsetY=(canvasSize-logoH)/2;
+  
+  // Zone du logo (rectangle de positionnement)
+  ctx.fillStyle='rgba(45,109,104,0.05)';
+  ctx.fillRect(offsetX,offsetY,logoW,logoH);
+  ctx.strokeStyle='#2d6d68';
+  ctx.lineWidth=2;
+  ctx.setLineDash([5,5]);
+  ctx.strokeRect(offsetX,offsetY,logoW,logoH);
+  ctx.setLineDash([]);
+  
+  // Dessiner le logo
+  ctx.drawImage(logoImage,offsetX,offsetY,logoW,logoH);
+  
+  // Effet broderie (grille de points) seulement sur le logo
+  ctx.globalAlpha=0.15;
+  ctx.fillStyle='#c85a3f';
+  const densite=+document.getElementById('densite').value;
+  const gap=Math.max(3,Math.min(15,600/densite));
+  
+  for(let x=offsetX+gap/2;x<offsetX+logoW;x+=gap){
+    for(let y=offsetY+gap/2;y<offsetY+logoH;y+=gap){
+      ctx.beginPath();
+      ctx.arc(x,y,1.5,0,Math.PI*2);
+      ctx.fill();
+    }
+  }
+  
+  ctx.globalAlpha=1;
+  
+  // Annotations dimensions
+  ctx.fillStyle='#546e7a';
+  ctx.font='bold 12px "JetBrains Mono", monospace';
+  ctx.textAlign='center';
+  
+  // Largeur du logo
+  ctx.fillText(`${logoFinalW}mm`,canvasSize/2,offsetY-10);
+  // Hauteur du logo
+  ctx.save();
+  ctx.translate(offsetX-10,canvasSize/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText(`${logoFinalH}mm`,0,0);
+  ctx.restore();
+  
+  // Format casquette
+  ctx.fillStyle='#c85a3f';
+  ctx.font='bold 14px "JetBrains Mono", monospace';
+  ctx.fillText(`FORMAT ${format}×${format}mm`,canvasSize/2,canvasSize-15);
+  
+  // Bordure finale épaisse
+  ctx.strokeStyle='#c85a3f';
+  ctx.lineWidth=4;
+  ctx.strokeRect(0,0,canvasSize,canvasSize);
+}
+
+// ── PDF EXPORT ──
+async function exportPDF(){
+  if(!lastResult){
+    alert('Calculez d\'abord la production');
+    return;
+  }
+  
+  const btn=document.getElementById('pdf-btn');
+  btn.textContent='⏳ Génération...';
+  btn.style.opacity='0.6';
+  
+  const{jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const W=210,H=297,M=15;
+  
+  const{resultats,stats}=lastResult;
+  
+  // Couleurs
+  const C={
+    ink:[10,14,26],
+    cream:[245,241,232],
+    rust:[200,90,63],
+    teal:[45,109,104],
+    slate:[84,110,122],
+    gold:[212,165,116],
+  };
+  
+  // ── PAGE 1: RESUME ──
+  doc.setFillColor(253,251,247);
+  doc.rect(0,0,W,H,'F');
+  
+  // Header
+  doc.setFillColor(...C.rust);
+  doc.rect(0,0,W,12,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(9);
+  doc.setFont('helvetica','bold');
+  doc.text('ATELIER BRODERIE — PROGRAMME DE PRODUCTION',M,7);
+  
+  // Titre
+  doc.setTextColor(...C.ink);
+  doc.setFontSize(24);
+  doc.setFont('helvetica','bold');
+  doc.text('Programme de Production',M,28);
+  
+  doc.setFontSize(9);
+  doc.setFont('helvetica','normal');
+  doc.setTextColor(...C.slate);
+  doc.text(new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}),M,36);
+  doc.text(`${projets.length} projet(s) • ${stats.totalPieces} pièce(s) • Format ${stats.format}×${stats.format}mm • Logo: ${logoData.name}`,M,42);
+  
+  // Ligne
+  doc.setDrawColor(...C.rust);
+  doc.setLineWidth(0.5);
+  doc.line(M,48,W-M,48);
+  
+  // Stats cards
+  const statCards=[
+    {l:'POINTS TOTAL',v:(stats.totalPoints/1000).toFixed(1)+'K'},
+    {l:'TEMPS BRODERIE',v:`${stats.totalHeures}h${stats.totalMin.toString().padStart(2,'0')}`},
+    {l:'FIL NÉCESSAIRE',v:stats.totalFil+' m'},
+    {l:'CHANGEMENTS',v:stats.totalChangements+' ×'},
+  ];
+  
+  const cW=43,cH=26,cY=56;
+  statCards.forEach((s,i)=>{
+    const cx=M+(i%2)*(cW+4);
+    const cy=cY+Math.floor(i/2)*(cH+4);
+    
+    doc.setFillStyle=255,255,255;
+    doc.setDrawColor(...C.rust);
+    doc.setLineWidth(0.4);
+    doc.roundedRect(cx,cy,cW,cH,2,2,'FD');
+    
+    // Barre couleur
+    const barC=i===0?C.rust:i===1?C.teal:i===2?C.gold:C.slate;
+    doc.setFillColor(...barC);
+    doc.rect(cx,cy,2,cH,'F');
+    
+    doc.setTextColor(...C.slate);
+    doc.setFontSize(6);
+    doc.setFont('helvetica','normal');
+    doc.text(s.l,cx+cW/2,cy+8,{align:'center'});
+    
+    doc.setTextColor(...C.ink);
+    doc.setFontSize(16);
+    doc.setFont('helvetica','bold');
+    doc.text(s.v,cx+cW/2,cy+19,{align:'center'});
+  });
+  
+  // Paramètres
+  const pY=118;
+  doc.setFillColor(255,255,255);
+  doc.setDrawColor(...C.teal);
+  doc.setLineWidth(0.4);
+  doc.roundedRect(M,pY,W-M*2,22,2,2,'FD');
+  
+  doc.setFillColor(...C.teal);
+  doc.rect(M,pY,2.5,22,'F');
+  
+  doc.setTextColor(...C.slate);
+  doc.setFontSize(6);
+  doc.setFont('helvetica','normal');
+  doc.text('VITESSE',M+6,pY+6);
+  doc.text('DENSITÉ',M+50,pY+6);
+  doc.text('COULEURS',M+95,pY+6);
+  doc.text('LOGO ADAPTÉ',M+135,pY+6);
+  
+  doc.setTextColor(...C.ink);
+  doc.setFontSize(14);
+  doc.setFont('helvetica','bold');
+  doc.text(`${stats.vitesse} pts/min`,M+6,pY+16);
+  doc.text(`${stats.densite} pts/cm`,M+50,pY+16);
+  doc.text(`${stats.nbCouleurs}`,M+95,pY+16);
+  doc.setFontSize(10);
+  doc.text(`${stats.logoFinalW}×${stats.logoFinalH}mm`,M+135,pY+16);
+  
+  // Table
+  const tY=148;
+  doc.setFillColor(...C.cream);
+  doc.setDrawColor(...C.rust);
+  doc.setLineWidth(0.3);
+  doc.rect(M,tY,W-M*2,8,'FD');
+  
+  doc.setTextColor(...C.slate);
+  doc.setFontSize(6.5);
+  doc.setFont('helvetica','bold');
+  const cols=[M+4,M+60,M+95,M+130,M+160];
+  ['PROJET','POINTS','TEMPS BROD.','TEMPS TOTAL','FIL'].forEach((h,i)=>doc.text(h,cols[i],tY+5.5));
+  
+  let rY=tY+8;
+  resultats.forEach((r,i)=>{
+    if(rY>H-25){
+      doc.addPage();
+      doc.setFillColor(253,251,247);
+      doc.rect(0,0,W,H,'F');
+      rY=M;
+    }
+    
+    doc.setFillColor(i%2===0?255:250,i%2===0?255:248,i%2===0?255:245);
+    doc.setDrawColor(232,220,200);
+    doc.setLineWidth(0.2);
+    doc.rect(M,rY,W-M*2,7,'FD');
+    
+    doc.setFillColor(...C.rust);
+    doc.circle(cols[0]+2,rY+3.5,1.5,'F');
+    
+    doc.setTextColor(...C.ink);
+    doc.setFontSize(7);
+    doc.setFont('helvetica','normal');
+    doc.text(r.nom,cols[0]+6,rY+4.8);
+    doc.text(`${(r.nbPointsTotal/1000).toFixed(1)}K`,cols[1],rY+4.8);
+    doc.text(`${r.tempsH}h${r.tempsM.toString().padStart(2,'0')}`,cols[2],rY+4.8);
+    doc.text(`${r.tempsTotalH}h${r.tempsTotalM.toString().padStart(2,'0')}`,cols[3],rY+4.8);
+    doc.text(`${r.filMetres}m`,cols[4],rY+4.8);
+    
+    rY+=7;
+  });
+  
+  // Footer
+  doc.setFillColor(...C.cream);
+  doc.rect(0,H-10,W,10,'F');
+  doc.setTextColor(...C.slate);
+  doc.setFontSize(7);
+  doc.text('Atelier Broderie — Programme de Production',M,H-4);
+  doc.text('Page 1',W-M,H-4,{align:'right'});
+  
+  doc.save('programme-broderie.pdf');
+  
+  btn.textContent='⬇ Export PDF';
+  btn.style.opacity='1';
+}
+
+// ── INIT ──
+/*addProjet({nom:'Casquette Logo',largeur:140,hauteur:140,quantite:10});*/
+</script>
+</body>
+</html>
