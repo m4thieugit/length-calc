@@ -272,6 +272,30 @@ header{
 .pdel:hover{color:var(--rust);background:var(--rust-dim);}
 .pfields{padding:12px 14px 16px;border-top:1.5px solid var(--sand);}
 
+.p-recommandation{
+  background: var(--teal-dim);
+  border: 1px dashed var(--teal);
+  border-radius: 8px;
+  padding: 10px;
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.p-recommandation label{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;
+  color: var(--teal);
+  cursor: pointer;
+  flex: 1;
+}
+.p-recommandation input[type="checkbox"]{
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--teal);
+}
+
 .add-btn{
   display:flex;align-items:center;justify-content:center;gap:8px;
   width:100%;padding:12px;
@@ -289,381 +313,470 @@ header{
   background:var(--teal-dim);
 }
 
+/* RIGHTPANE */
+.rightpane{
+  padding:40px 48px;
+  overflow-y:auto;
+}
+
+@media(max-width:1024px){
+  .rightpane{padding:28px 20px;}
+}
+
+.section-title{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;letter-spacing:3px;text-transform:uppercase;
+  color:var(--rust);margin-bottom:20px;
+  display:flex;align-items:center;gap:14px;
+  font-weight:600;
+}
+.section-title::after{content:'';flex:1;height:1.5px;background:var(--sand);}
+
+/* CALC BUTTON */
 .calc-btn{
-  margin:20px 26px 26px;
-  padding:16px;
+  width:100%;
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;letter-spacing:2px;
+  padding:14px;
   background:var(--rust);
-  color:var(--paper);border:none;
-  font-family:'Crimson Pro',serif;
-  font-weight:700;font-size:13px;
-  letter-spacing:5px;text-transform:uppercase;
-  cursor:pointer;border-radius:10px;
-  transition:all .3s cubic-bezier(.4,0,.2,1);
-  box-shadow:0 4px 16px rgba(200,90,63,0.35);
+  color:var(--paper);
+  border:none;border-radius:12px;
+  cursor:pointer;font-weight:600;
+  transition:all .25s;
+  text-transform:uppercase;
+  box-shadow:0 4px 16px rgba(200,90,63,0.3);
 }
 .calc-btn:hover{
   background:#b04c32;
+  box-shadow:0 6px 24px rgba(200,90,63,0.5);
   transform:translateY(-2px);
-  box-shadow:0 8px 24px rgba(200,90,63,0.5);
 }
-.calc-btn:active{transform:translateY(0);}
-
-/* RESULTS */
-.results{
-  padding:32px;
-  display:flex;flex-direction:column;gap:28px;
+.calc-btn:disabled{
+  opacity:0.5;cursor:not-allowed;
 }
 
-.res-empty{
-  text-align:center;
-  padding:60px 20px;
+/* RESULT CARD */
+.result-card{
+  background:#fff;
+  border:2px solid var(--sand);
+  border-radius:16px;
+  padding:28px;
+  box-shadow:0 8px 32px rgba(10,14,26,0.08);
+  margin-top:24px;
+}
+
+.res-top{display:flex;align-items:center;gap:16px;margin-bottom:24px;}
+.res-icon{
+  width:56px;height:56px;
+  background:linear-gradient(135deg, var(--rust), var(--gold));
+  border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:26px;
+  box-shadow:0 4px 16px rgba(200,90,63,0.25);
+}
+.res-title-box h2{
+  font-size:22px;font-weight:700;
+  color:var(--ink);margin-bottom:4px;
+}
+.res-subtitle{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;color:var(--slate);
+  letter-spacing:1.5px;
+}
+
+.res-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:16px;margin-bottom:24px;
+}
+.res-item{
+  background:var(--cream);
+  padding:16px;border-radius:10px;
+  border-left:3px solid var(--rust);
+}
+.res-item-label{
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;letter-spacing:1.5px;
+  color:var(--slate);text-transform:uppercase;
+  margin-bottom:8px;
+}
+.res-item-val{
+  font-size:20px;font-weight:700;
+  color:var(--ink);
+}
+
+.res-table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:16px;
+}
+.res-table th{
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;letter-spacing:1.5px;
+  text-transform:uppercase;
   color:var(--slate);
-}
-.res-empty-icon{
-  font-size:64px;margin-bottom:20px;
-  opacity:0.3;
-}
-.res-empty-text{
-  font-family:'Crimson Pro',serif;
-  font-size:18px;font-weight:400;
-  color:var(--slate);
-}
-
-.res-header{
-  display:flex;align-items:flex-start;justify-content:space-between;
-  gap:20px;
-  padding-bottom:20px;
+  text-align:left;
+  padding:10px 12px;
+  background:var(--cream);
   border-bottom:2px solid var(--sand);
 }
+.res-table td{
+  padding:12px;
+  border-bottom:1px solid var(--sand);
+  font-size:14px;
+}
+.res-table tr:hover{background:rgba(45,109,104,0.03);}
 
-.res-title{
-  font-family:'Crimson Pro',serif;
-  font-size:32px;font-weight:700;
-  color:var(--ink);
-  line-height:1.2;
-  letter-spacing:-0.02em;
+/* PREVIEW SECTION */
+.preview-section{
+  margin-top:32px;
+  background:#fff;
+  border:2px solid var(--sand);
+  border-radius:16px;
+  padding:28px;
 }
 
-.res-meta{
-  font-family:'JetBrains Mono',monospace;
-  font-size:10px;
-  color:var(--slate);
-  margin-top:8px;
-  letter-spacing:1px;
-}
-
-/* STATS CARDS */
-.stats-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
-  gap:16px;
-}
-
-.stat-card{
-  background:linear-gradient(135deg, var(--paper) 0%, var(--cream) 100%);
-  border:1.5px solid var(--sand);
-  border-radius:12px;
+.preview-canvas-wrap{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  margin:24px 0;
   padding:20px;
-  position:relative;
-  overflow:hidden;
+  background:var(--cream);
+  border-radius:12px;
+}
+
+#previewCanvas{
+  max-width:100%;
+  height:auto;
+  border-radius:8px;
+  box-shadow:0 8px 24px rgba(10,14,26,0.12);
+}
+
+.preview-info{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+  color:var(--slate);
+  text-align:center;
+  margin-top:16px;
+  line-height:1.6;
+}
+
+/* APERÇUS DES PROJETS */
+.projects-previews{
+  margin-top:32px;
+}
+
+.project-preview-card{
+  background:#fff;
+  border:2px solid var(--sand);
+  border-radius:16px;
+  padding:24px;
+  margin-bottom:24px;
+  box-shadow:0 4px 16px rgba(10,14,26,0.06);
   transition:all .25s;
 }
 
-.stat-card::before{
-  content:'';
-  position:absolute;
-  top:0;left:0;
-  width:4px;height:100%;
-  background:var(--rust);
-}
-
-.stat-card:nth-child(2)::before{background:var(--teal);}
-.stat-card:nth-child(3)::before{background:var(--gold);}
-.stat-card:nth-child(4)::before{background:var(--slate);}
-
-.stat-card:hover{
-  box-shadow:0 8px 24px rgba(10,14,26,0.12);
+.project-preview-card:hover{
+  box-shadow:0 8px 24px rgba(10,14,26,0.1);
   transform:translateY(-2px);
 }
 
-.stat-label{
-  font-family:'JetBrains Mono',monospace;
-  font-size:9px;letter-spacing:2px;
-  text-transform:uppercase;
-  color:var(--slate);
-  margin-bottom:10px;
-  font-weight:500;
-}
-
-.stat-value{
-  font-family:'Crimson Pro',serif;
-  font-size:32px;font-weight:700;
-  color:var(--ink);
-  line-height:1;
-}
-
-.stat-unit{
-  font-size:16px;
-  color:var(--slate);
-  margin-left:4px;
-  font-weight:400;
-}
-
-/* PROJETS TABLE */
-.projets-table{
-  background:var(--paper);
-  border:1.5px solid var(--sand);
-  border-radius:12px;
-  overflow:hidden;
-}
-
-.table-header{
-  background:var(--cream);
-  border-bottom:1.5px solid var(--sand);
-  padding:14px 20px;
-  display:grid;
-  grid-template-columns:2fr 1fr 1.2fr 1.2fr 0.8fr 0.8fr;
-  gap:16px;
-}
-
-.th{
-  font-family:'JetBrains Mono',monospace;
-  font-size:9px;letter-spacing:2px;
-  text-transform:uppercase;
-  color:var(--slate);
-  font-weight:600;
-}
-
-.table-row{
-  padding:16px 20px;
-  display:grid;
-  grid-template-columns:2fr 1fr 1.2fr 1.2fr 0.8fr 0.8fr;
-  gap:16px;
-  border-bottom:1px solid var(--sand);
-  align-items:center;
-  transition:background .2s;
-}
-
-.table-row:last-child{border-bottom:none;}
-.table-row:hover{background:rgba(200,90,63,0.03);}
-
-.td{
-  font-family:'JetBrains Mono',monospace;
-  font-size:12px;
-  color:var(--ink);
-  font-weight:400;
-}
-
-.td-name{
-  font-family:'Crimson Pro',serif;
-  font-size:15px;
-  font-weight:600;
-  color:var(--ink);
+.project-preview-header{
   display:flex;
   align-items:center;
-  gap:10px;
+  gap:12px;
+  margin-bottom:20px;
+  padding-bottom:16px;
+  border-bottom:1.5px solid var(--sand);
 }
 
-.td-dot{
-  width:8px;height:8px;
+.project-preview-header .pdot{
+  width:12px;
+  height:12px;
   border-radius:50%;
   background:var(--rust);
   flex-shrink:0;
 }
 
-@media(max-width:900px){
-  .table-header,.table-row{
-    grid-template-columns:1fr;
-    gap:8px;
-  }
-  .th{text-align:left;}
+.project-preview-header h3{
+  flex:1;
+  font-size:18px;
+  font-weight:600;
+  color:var(--ink);
+  margin:0;
 }
 
-/* CANVAS */
-.canvas-container{
-  background:var(--paper);
-  border:1.5px solid var(--sand);
-  border-radius:12px;
-  padding:24px;
+.project-preview-dims{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+  color:var(--slate);
+  background:var(--cream);
+  padding:6px 12px;
+  border-radius:6px;
+  font-weight:500;
+}
+
+.project-preview-body{
   display:flex;
   flex-direction:column;
+  align-items:center;
   gap:16px;
 }
 
-.canvas-title{
-  font-family:'Crimson Pro',serif;
-  font-size:20px;
-  font-weight:600;
-  color:var(--ink);
-  padding-bottom:12px;
-  border-bottom:1px solid var(--sand);
-}
-
-#previewCanvas{
+.project-canvas{
   max-width:100%;
+  height:auto;
   border-radius:8px;
-  box-shadow:0 4px 20px rgba(10,14,26,0.1);
-  background:#fff;
+  box-shadow:0 4px 16px rgba(10,14,26,0.08);
+  background:var(--cream);
 }
 
-.canvas-info{
+.project-preview-info{
   font-family:'JetBrains Mono',monospace;
-  font-size:10px;
+  font-size:11px;
   color:var(--slate);
-  padding:12px;
+  text-align:center;
+  padding:10px 16px;
   background:var(--cream);
-  border-radius:6px;
-  border-left:3px solid var(--teal);
+  border-radius:8px;
+  border:1.5px solid var(--sand);
+}
+
+@media print{
+  .sidebar,.header-right,.calc-btn{display:none;}
+  .main{grid-template-columns:1fr;}
+  .rightpane{padding:20px;}
 }
 </style>
 </head>
 <body>
 <div class="page">
-  <header>
-    <div class="logo">
-      <h1><em>Atelier</em> Broderie</h1>
-      <div class="logo-sub">Programme Production</div>
-    </div>
-    <div class="header-right">
-      <div class="hbadge">v2.1</div>
-      <button class="back-btn visible" onclick="window.location.href ='./index.html'">👈 accueil</button>
-      <button class="pdf-btn" id="pdf-btn" onclick="exportPDF()">⬇ Export PDF</button>
-    </div>
-  </header>
-
-  <div class="main">
-    <div class="sidebar">
-      <!-- LOGO UPLOAD -->
-      <div class="sb-sec">
-        <div class="slabel">Import Logo</div>
-        <div class="img-upload" id="uploadArea" onclick="document.getElementById('fileInput').click()">
-          <input type="file" id="fileInput" accept="image/*" onchange="handleImageUpload(event)">
-          <div class="upload-label">📁 Cliquez pour importer</div>
-          <img id="uploadPreview" class="upload-preview" alt="Aperçu">
-          <div id="uploadInfo" class="upload-info"></div>
-        </div>
-      </div>
-
-      <!-- FORMAT CASQUETTE -->
-      <div class="sb-sec">
-        <div class="slabel">Format Casquette</div>
-        <div class="field">
-          <label>Format broderie</label>
-          <select id="formatCasquette" onchange="updateFormatCasquette()">
-            <option value="140">Standard 140×140 mm</option>
-            <option value="320">Large 320×320 mm</option>
-          </select>
-        </div>
-        <div class="field-note" style="margin-top:8px;">
-          📏 Les projets s'adapteront automatiquement à ce format
-        </div>
-      </div>
-
-      <!-- PARAMETRES MACHINE HCR3-1504 -->
-      <div class="sb-sec">
-        <div class="slabel">HCR3-1504 HappyJapan</div>
-        <div class="field" style="margin-bottom:12px;">
-          <label>Type de support</label>
-          <select id="typeSupport" onchange="updateVitesseSupport()">
-            <option value="cap">Casquette (1000 pts/min)</option>
-            <option value="flat" selected>Textile plat (1100 pts/min)</option>
-          </select>
-        </div>
-        <div class="grid2">
-          <div class="field">
-            <label>Vitesse machine</label>
-            <input type="text" id="vitesseDisplay" value="1000 pts/min" disabled style="opacity:0.7;cursor:not-allowed;background:var(--cream);">
-            <input type="hidden" id="vitesse" value="1000">
-          </div>
-          <div class="field">
-            <label>Têtes actives (4 max)</label>
-            <select id="nbTetes">
-              <option value="1">1 tête</option>
-              <option value="2">2 têtes</option>
-              <option value="3">3 têtes</option>
-              <option value="4" selected>4 têtes</option>
-            </select>
-          </div>
-        </div>
-        <div class="grid2" style="margin-top:12px;">
-          <div class="field">
-            <label>Densité (pts/cm)</label>
-            <input type="number" id="densite" value="45" min="30" max="60">
-          </div>
-          <div class="field">
-            <label>Aiguilles (15 max)</label>
-            <input type="number" id="nbCouleurs" value="6" min="1" max="15">
-          </div>
-        </div>
-        <div class="grid2" style="margin-top:12px;">
-          <div class="field">
-            <label>Type point</label>
-            <select id="typePoint">
-              <option value="1.0">Satin (normal)</option>
-              <option value="1.3">Plein (dense)</option>
-              <option value="0.7">Léger (fin)</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Temps changement</label>
-            <input type="number" id="tempsChangement" value="15" min="5" max="60" step="5">
-            <div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--slate);margin-top:2px;">sec/couleur</div>
-          </div>
-        </div>
-        <div class="field-note" style="margin-top:8px;">
-          🏭 Zone casquette: 358×79mm • Textile: 358×450mm • 15 aiguilles
-        </div>
-      </div>
-
-      <!-- PROJETS BRODERIE -->
-      <div class="sb-sec">
-        <div class="slabel">Projets Broderie</div>
-        <div class="projets-list" id="projets-list"></div>
-        <button class="add-btn" onclick="addProjet()">+ Ajouter un projet</button>
-      </div>
-
-      <button class="calc-btn" onclick="calculer()">Calculer Production</button>
-    </div>
-
-    <div class="results" id="results">
-      <div class="res-empty">
-        <div class="res-empty-icon">🧵</div>
-        <div class="res-empty-text">Importez un logo et ajoutez des projets pour commencer</div>
-      </div>
-    </div>
+<header>
+  <div class="logo">
+    <h1>Atelier <em>Broderie</em></h1>
+    <div class="logo-sub">Programme Production</div>
   </div>
+  <div class="header-right">
+    <div class="hbadge">v2.0</div>
+    <button class="back-btn visible" onclick="window.location.href ='./index.html'">👈 accueil</button>
+    <button class="pdf-btn" id="pdf-btn" onclick="exportPDF()">⬇ Export PDF</button>
+  </div>
+</header>
+
+<div class="main">
+  <aside class="sidebar">
+    <section class="sb-sec">
+      <div class="slabel">Configuration</div>
+      
+      <div class="field">
+        <label>Format broderie (mm)</label>
+        <select id="formatCasquette" onchange="updateAllRecommandations()">
+            <option value="140" selected>140x140 mm</option>
+            <option value="320">320x320 mm</option>
+        </select>
+        <div class="field-note">Format maximum disponible pour la broderie</div>
+      </div>
+      
+      <div class="grid2" style="margin-top:12px;">
+        <div class="field">
+          <label>Vitesse (pts/min)</label>
+          <input type="number" id="vitesse" value="800" min="100" max="1200" step="50">
+        </div>
+        
+        <div class="field">
+          <label>Densité (pts/cm)</label>
+          <input type="number" id="densite" value="40" min="20" max="80" step="5">
+        </div>
+      </div>
+      
+      <div class="grid2" style="margin-top:12px;">
+        <div class="field">
+          <label>Nombre couleurs</label>
+          <select id="nbCouleurs">
+            <option value="1">1 couleur</option>
+            <option value="2">2 couleurs</option>
+            <option value="3" selected>3 couleurs</option>
+            <option value="4">4 couleurs</option>
+            <option value="5">5 couleurs</option>
+            <option value="6">6 couleurs</option>
+            <option value="8">8 couleurs</option>
+          </select>
+        </div>
+        
+        <div class="field">
+          <label>Nombre têtes</label>
+          <select id="nbTetes">
+            <option value="1" selected>1 tête</option>
+            <option value="2">2 têtes</option>
+            <option value="3">3 têtes</option>
+            <option value="4">4 têtes</option>
+            <option value="6">6 têtes</option>
+            <option value="8">8 têtes</option>
+          </select>
+        </div>
+      </div>
+    </section>
+    
+    <section class="sb-sec">
+      <div class="slabel">Logo à broder</div>
+      
+      <div class="img-upload" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+        <div class="upload-label">📁 Cliquer pour charger un logo</div>
+        <img class="upload-preview" id="uploadPreview" alt="Preview">
+        <div class="upload-info" id="uploadInfo">—</div>
+        <input type="file" id="fileInput" accept="image/*" onchange="handleImageUpload(event)">
+      </div>
+
+      <div class="field-note" style="margin-top:16px;padding:12px;background:var(--teal-light);border-radius:8px;border:1.5px solid var(--teal);">
+        💡 Les dimensions du logo sont définies individuellement pour chaque projet ci-dessous
+      </div>
+    </section>
+    
+    <section class="sb-sec" style="flex:1;min-height:0;">
+      <div class="slabel">Projets de broderie</div>
+      <div class="projets-list" id="projetsList"></div>
+      <button class="add-btn" onclick="addProjet()">+ Nouveau projet</button>
+    </section>
+  </aside>
+  
+  <main class="rightpane">
+    <div class="section-title">Résultat de production</div>
+    
+    <button class="calc-btn" onclick="calculer()">🎯 Calculer la production</button>
+    
+    <div id="resultSection"></div>
+    
+    <div class="preview-section">
+      <div class="section-title">Aperçu visuel</div>
+      <div class="preview-canvas-wrap">
+        <canvas id="previewCanvas"></canvas>
+      </div>
+      <div class="preview-info" id="previewInfo">
+        Chargez un logo et lancez le calcul pour voir l'aperçu de broderie
+      </div>
+
+    </div>
+  </main>
+</div>
 </div>
 
 <script>
-// ── GLOBAL STATE ──
+// ── STATE ──
 let projets=[];
-let projetId=0;
 let logoImage=null;
-let logoData=null;
+let logoData={name:'',width:0,height:0};
 let lastResult=null;
 
-const COLORS=['#c85a3f','#2d6d68','#d4a574','#546e7a','#8b6f47','#4a7c7e','#b85a42','#5d7c6f'];
-
-// ── MACHINE HCR3-1504 ──
-function updateVitesseSupport(){
-  const type=document.getElementById('typeSupport').value;
-  const vitesse=type==='flat'?1100:1000;
-  document.getElementById('vitesse').value=vitesse;
-  document.getElementById('vitesseDisplay').value=vitesse+' pts/min';
+// ── PROJETS ──
+function addProjet(data=null){
+  const id=Date.now();
+  const p=data||{
+    id,
+    nom:`Visuel #${projets.length+1}`,
+    largeur:140,
+    hauteur:140,
+    quantite:1,
+    useRecommanded: false
+  };
+  p.id=id;
+  if(p.useRecommanded === undefined) p.useRecommanded = true;
+  projets.push(p);
+  renderProjets();
 }
 
-// ── IMAGE UPLOAD ──
+function delProjet(id){
+  projets=projets.filter(p=>p.id!==id);
+  renderProjets();
+}
+
+function updateAllRecommandations() {
+  projets.forEach((p, idx) => {
+    if (p.useRecommanded) applyRecommandation(idx);
+  });
+  renderProjets();
+}
+
+function applyRecommandation(idx) {
+  if (!logoImage) return;
+  const format = +document.getElementById('formatCasquette').value;
+  const ratio = Math.min(format / logoImage.width, format / logoImage.height);
+  projets[idx].largeur = Math.round(logoImage.width * ratio);
+  projets[idx].hauteur = Math.round(logoImage.height * ratio);
+}
+
+function toggleRecommandation(idx, checked) {
+  projets[idx].useRecommanded = checked;
+  if (checked) {
+    applyRecommandation(idx);
+    renderProjets();
+  }
+}
+
+function renderProjets(){
+  const list=document.getElementById('projetsList');
+  const format = +document.getElementById('formatCasquette').value;
+  
+  list.innerHTML=projets.map((p,idx)=>{
+    // Calcul de la taille recommandée pour l'affichage
+    let recW = 0, recH = 0;
+    if(logoImage) {
+      const ratio = Math.min(format / logoImage.width, format / logoImage.height);
+      recW = Math.round(logoImage.width * ratio);
+      recH = Math.round(logoImage.height * ratio);
+    }
+
+    return `
+    <div class="prow">
+      <div class="prow-head">
+        <div class="pdot"></div>
+        <input class="pname" value="${p.nom}" 
+          onchange="projets[${idx}].nom=this.value">
+        <div class="psummary">${p.largeur}×${p.hauteur}mm • ×${p.quantite}</div>
+        <button class="pdel" onclick="delProjet(${p.id})">✕</button>
+      </div>
+      <div class="pfields">
+        <div class="grid3">
+          <div class="field">
+            <label>Largeur</label>
+            <input type="number" value="${p.largeur}" min="10" max="600" step="5"
+              ${p.useRecommanded ? 'disabled' : ''}
+              onchange="projets[${idx}].largeur=+this.value">
+          </div>
+          <div class="field">
+            <label>Hauteur</label>
+            <input type="number" value="${p.hauteur}" min="10" max="600" step="5"
+              ${p.useRecommanded ? 'disabled' : ''}
+              onchange="projets[${idx}].hauteur=+this.value">
+          </div>
+          <div class="field">
+            <label>Quantité</label>
+            <input type="number" value="${p.quantite}" min="1" max="1000"
+              onchange="projets[${idx}].quantite=+this.value">
+          </div>
+        </div>
+
+        <div class="p-recommandation">
+          <input type="checkbox" id="rec_${idx}" ${p.useRecommanded ? 'checked' : ''} 
+            onchange="toggleRecommandation(${idx}, this.checked)">
+          <label for="rec_${idx}">
+            Utiliser taille recommandée (${recW > 0 ? recW + 'x' + recH : 'chargez un logo'})
+          </label>
+        </div>
+      </div>
+    </div>
+  `}).join('');
+}
+
+// ── IMAGE ──
 function handleImageUpload(e){
   const file=e.target.files[0];
   if(!file)return;
   
   const reader=new FileReader();
-  reader.onload=function(ev){
+  reader.onload=ev=>{
     const img=new Image();
-    img.onload=function(){
+    img.onload=()=>{
       logoImage=img;
-      
-      // Analyser le logo pour calculer la surface réelle
       const canvas=document.createElement('canvas');
       canvas.width=img.width;
       canvas.height=img.height;
@@ -675,14 +788,12 @@ function handleImageUpload(e){
       let pixelsRemplis=0;
       const totalPixels=img.width*img.height;
       
-      // Compter les pixels non-blancs et non-transparents
       for(let i=0;i<pixels.length;i+=4){
         const r=pixels[i];
         const g=pixels[i+1];
         const b=pixels[i+2];
         const a=pixels[i+3];
         
-        // Si le pixel n'est pas blanc (RGB>240) et pas transparent (alpha>50)
         if(a>50 && (r<240 || g<240 || b<240)){
           pixelsRemplis++;
         }
@@ -701,319 +812,211 @@ function handleImageUpload(e){
       };
       
       const preview=document.getElementById('uploadPreview');
+      const info=document.getElementById('uploadInfo');
+      const zone=document.getElementById('uploadZone');
+      
       preview.src=ev.target.result;
       preview.classList.add('visible');
-      
-      const info=document.getElementById('uploadInfo');
-      info.innerHTML=`${logoData.name} • ${logoData.width}×${logoData.height}px<br>Surface brodée: ${tauxRemplissage}% (${logoData.size} KB)`;
+      info.textContent=`${file.name} • ${img.width}×${img.height}px`;
       info.classList.add('visible');
-      
-      document.getElementById('uploadArea').classList.add('has-image');
-      
-      // Auto-ajuster densité selon taille
-      const avgSize=(img.width+img.height)/2;
-      if(avgSize<300){
-        document.getElementById('densite').value=60;
-      }else if(avgSize>800){
-        document.getElementById('densite').value=35;
-      }else{
-        document.getElementById('densite').value=45;
-      }
+      zone.classList.add('has-image');
+
+      // Mettre à jour les recommandations auto
+      updateAllRecommandations();
     };
     img.src=ev.target.result;
   };
   reader.readAsDataURL(file);
 }
 
-// ── PROJETS ──
-function addProjet(data={}){
-  const id=++projetId;
-  const format=+document.getElementById('formatCasquette').value;
-  const p={
-    id,
-    nom:data.nom||`Projet #${id}`,
-    largeur:data.largeur||format,
-    hauteur:data.hauteur||format,
-    quantite:data.quantite||1,
-    colorIdx:projets.length%COLORS.length
-  };
-  projets.push(p);
-  renderProjets();
-}
-
-function updateFormatCasquette(){
-  const format=+document.getElementById('formatCasquette').value;
-  // Mettre à jour tous les projets existants
-  projets.forEach(p=>{
-    p.largeur=format;
-    p.hauteur=format;
-  });
-  renderProjets();
-  
-  // Ajuster la densité selon le format
-  if(format===140){
-    document.getElementById('densite').value=50;
-  }else{
-    document.getElementById('densite').value=35;
-  }
-}
-
-function deleteProjet(id){
-  projets=projets.filter(p=>p.id!==id);
-  renderProjets();
-}
-
-function updateProjet(id,field,value){
-  const p=projets.find(p=>p.id===id);
-  if(p)p[field]=value;
-}
-
-function renderProjets(){
-  const list=document.getElementById('projets-list');
-  list.innerHTML='';
-  
-  const format=+document.getElementById('formatCasquette').value;
-  
-  projets.forEach(p=>{
-    const div=document.createElement('div');
-    div.className='prow';
-    div.innerHTML=`
-      <div class="prow-head">
-        <div class="pdot" style="background:${COLORS[p.colorIdx]}"></div>
-        <input class="pname" value="${p.nom}" onchange="updateProjet(${p.id},'nom',this.value)">
-        <span class="psummary">${format}×${format}mm 🧢</span>
-        <button class="pdel" onclick="deleteProjet(${p.id})">✕</button>
-      </div>
-      <div class="pfields">
-        <div class="grid3">
-          <div class="field">
-            <label>Format fixe</label>
-            <input type="text" value="${format}×${format} mm" disabled style="opacity:0.6;cursor:not-allowed;">
-          </div>
-          <div class="field">
-            <label>Quantité</label>
-            <input type="number" value="${p.quantite}" min="1" onchange="updateProjet(${p.id},'quantite',+this.value)">
-          </div>
-          <div class="field">
-            <label>Surface</label>
-            <input type="text" value="${(format*format/100).toFixed(0)} cm²" disabled style="opacity:0.6;cursor:not-allowed;">
-          </div>
-        </div>
-      </div>
-    `;
-    list.appendChild(div);
-  });
-}
-
-// ── CALCULS BRODERIE ──
+// ── CALCUL ──
 function calculer(){
   if(!logoImage){
-    alert('Veuillez d\'abord importer un logo');
+    alert('Veuillez charger un logo d\'abord');
     return;
   }
+  
   if(projets.length===0){
     alert('Veuillez ajouter au moins un projet');
     return;
   }
   
+  const format=+document.getElementById('formatCasquette').value;
   const vitesse=+document.getElementById('vitesse').value;
   const densite=+document.getElementById('densite').value;
-  const typePoint=+document.getElementById('typePoint').value;
   const nbCouleurs=+document.getElementById('nbCouleurs').value;
-  const format=+document.getElementById('formatCasquette').value;
   const nbTetes=+document.getElementById('nbTetes').value;
-  const tempsChangementSec=+document.getElementById('tempsChangement').value;
   
-  // Calculer le facteur d'échelle du logo pour s'adapter au format carré
-  const logoRatio=logoImage.width/logoImage.height;
-  let logoFinalW,logoFinalH;
-  
-  if(logoRatio>1){
-    // Logo plus large que haut
-    logoFinalW=format;
-    logoFinalH=format/logoRatio;
-  }else{
-    // Logo plus haut que large (ou carré)
-    logoFinalH=format;
-    logoFinalW=format*logoRatio;
-  }
-  
-  const surfaceLogomm2=logoFinalW*logoFinalH;
-  
-  // Calculer pour chaque projet
   const resultats=projets.map(p=>{
-    const surfaceMm2=format*format; // Surface totale disponible
-    const surfaceLogomm2=logoFinalW*logoFinalH; // Surface du cadre du logo
+    let logoW=p.largeur;
+    let logoH=p.hauteur;
+    
+    if (logoW > format || logoH > format) {
+        alert(`Le projet "${p.nom}" dépasse le format maximum (${format}mm)`);
+    }
+
+    const surfaceMm2=format*format;
+    const surfaceLogomm2=logoW*logoH; // Surface du cadre du logo
     
     // CALCUL DE LA SURFACE RÉELLEMENT BRODÉE
     // On utilise le taux de remplissage du logo analysé
     const surfaceReelleBrodeeMm2=surfaceLogomm2*(logoData.tauxRemplissage/100);
     const surfaceReelleCm2=surfaceReelleBrodeeMm2/100;
+
+    const surfaceLogoCm2=surfaceReelleCm2;
+    const pointsParLogo=Math.round(surfaceLogoCm2*densite*densite);
+    const nbPieces=p.quantite;
+    const nbPointsTotal=pointsParLogo*nbPieces;
+    const tempsBroderieMin=nbPointsTotal/vitesse;
+    const changementsCouleur=nbPieces*(nbCouleurs-1);
+    const tempsChangementsMin=changementsCouleur*0.5; 
+    const tempsTotalMin=tempsBroderieMin+tempsChangementsMin;
+    const tempsTotalAvecTetesMin=tempsTotalMin/nbTetes;
     
-    // Nombre de points basé sur la VRAIE surface à broder
-    const nbPointsBase=Math.round(surfaceReelleCm2*densite*densite*typePoint);
-    const nbPointsTotal=nbPointsBase*p.quantite;
-    
-    // TEMPS DE BRODERIE SIMPLE
-    // Temps pour 1 pièce = nbPoints / vitesse (en minutes)
-    const tempsPar1Piece=nbPointsBase/vitesse;
-    
-    // AVEC PLUSIEURS TÊTES : les pièces sont brodées EN PARALLÈLE
-    // Ex: 10 pièces avec 4 têtes = 3 lots (4+4+2)
-    // Chaque lot prend le même temps qu'une pièce
-    const nbLots=Math.ceil(p.quantite/nbTetes);
-    const tempsBroderieMin=tempsPar1Piece*nbLots;
-    
-    // Changements de couleur (par lot, pas par pièce)
-    const tempsChangementMin=(tempsChangementSec/60)*nbCouleurs*nbLots;
-    
-    // Temps de préparation (chargement/déchargement des cadres par lot)
-    const tempsPrepMin=2*nbLots;
-    
-    // TEMPS TOTAL
-    const tempsTotalMin=tempsBroderieMin+tempsChangementMin+tempsPrepMin;
+    const tempsH=Math.floor(tempsTotalAvecTetesMin/60);
+    const tempsM=Math.round(tempsTotalAvecTetesMin%60);
     const tempsTotalH=Math.floor(tempsTotalMin/60);
     const tempsTotalM=Math.round(tempsTotalMin%60);
-    
-    // Détail du temps de broderie seul (sans changements)
-    const tempsBrodH=Math.floor(tempsBroderieMin/60);
-    const tempsBrodM=Math.round(tempsBroderieMin%60);
-    
-    // Consommation fil (estimation: 1 point ≈ 0.4mm fil)
-    const filMm=nbPointsTotal*0.4;
-    const filMetres=(filMm/1000).toFixed(1);
-    
-    // Taux de couverture (% du format utilisé par le logo)
-    const tauxCouverture=((surfaceLogomm2/surfaceMm2)*100).toFixed(1);
+    const filMetres=Math.round((nbPointsTotal*2)/1000);
     
     return{
-      ...p,
-      nbPoints:nbPointsBase,
+      nom:p.nom,
+      nbPieces,
       nbPointsTotal,
+      tempsH,
+      tempsM,
       tempsTotalH,
       tempsTotalM,
-      tempsBrodH,
-      tempsBrodM,
-      tempsBroderieMin:tempsBroderieMin.toFixed(1),
-      tempsChangementMin:tempsChangementMin.toFixed(1),
-      tempsPrepMin:tempsPrepMin.toFixed(1),
-      nbLots,
       filMetres,
-      logoFinalW:logoFinalW.toFixed(1),
-      logoFinalH:logoFinalH.toFixed(1),
-      surfaceReelleCm2:surfaceReelleCm2.toFixed(1),
-      tauxCouverture
+      changementsCouleur,
+      logoW, 
+      logoH
     };
   });
   
-  // Stats globales
   const totalPoints=resultats.reduce((s,r)=>s+r.nbPointsTotal,0);
-  const totalMinutes=resultats.reduce((s,r)=>s+(r.tempsTotalH*60+r.tempsTotalM),0);
+  const totalMinutes=resultats.reduce((s,r)=>s+(r.tempsH*60+r.tempsM),0);
   const totalHeures=Math.floor(totalMinutes/60);
   const totalMin=Math.round(totalMinutes%60);
-  const totalFil=resultats.reduce((s,r)=>s+parseFloat(r.filMetres),0).toFixed(1);
-  const totalPieces=resultats.reduce((s,r)=>s+r.quantite,0);
-  const totalLots=resultats.reduce((s,r)=>s+r.nbLots,0);
+  const totalFil=resultats.reduce((s,r)=>s+r.filMetres,0);
+  const totalChangements=resultats.reduce((s,r)=>s+r.changementsCouleur,0);
+  const totalPieces=projets.reduce((s,p)=>s+p.quantite,0);
+  
+  const avgLogoW=Math.round(resultats.reduce((s,r)=>s+r.logoW,0)/resultats.length);
+  const avgLogoH=Math.round(resultats.reduce((s,r)=>s+r.logoH,0)/resultats.length);
+  const avgPointsParLogo=Math.round(totalPoints/totalPieces);
   
   lastResult={
     resultats,
     stats:{
+      format,
+      vitesse,
+      densite,
+      nbCouleurs,
+      nbTetes,
+      logoFinalW:avgLogoW,
+      logoFinalH:avgLogoH,
+      pointsParLogo:avgPointsParLogo,
       totalPoints,
       totalHeures,
       totalMin,
       totalFil,
-      totalPieces,
-      totalLots,
-      nbCouleurs,
-      nbTetes,
-      vitesse,
-      densite,
-      format,
-      logoFinalW:logoFinalW.toFixed(1),
-      logoFinalH:logoFinalH.toFixed(1)
+      totalChangements,
+      totalPieces
     }
   };
   
-  renderResults();
+  afficherResultats(lastResult);
   document.getElementById('pdf-btn').classList.add('visible');
 }
 
-// ── AFFICHAGE RESULTATS ──
-function renderResults(){
-  if(!lastResult)return;
-  
-  const{resultats,stats}=lastResult;
-  const resDiv=document.getElementById('results');
-  
-  resDiv.innerHTML=`
-    <div class="res-header">
-      <div>
-        <div class="res-title">Programme de Production</div>
-        <div class="res-meta">
-          ${new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
-          • ${projets.length} projet(s) • ${stats.totalPieces} pièce(s)
+function afficherResultats({resultats,stats}){
+  const html=`
+    <div class="result-card">
+      <div class="res-top">
+        <div class="res-icon">🎯</div>
+        <div class="res-title-box">
+          <h2>Production calculée</h2>
+          <div class="res-subtitle">
+            ${projets.length} projet(s) • ${stats.totalPieces} pièce(s) • Logo moyen: ${stats.logoFinalW}×${stats.logoFinalH}mm
+          </div>
         </div>
       </div>
+      
+      <div class="res-grid">
+        <div class="res-item">
+          <div class="res-item-label">Points total</div>
+          <div class="res-item-val">${(stats.totalPoints/1000).toFixed(1)}K</div>
+        </div>
+        <div class="res-item">
+          <div class="res-item-label">Temps broderie</div>
+          <div class="res-item-val">${stats.totalHeures}h${stats.totalMin.toString().padStart(2,'0')}</div>
+        </div>
+        <div class="res-item">
+          <div class="res-item-label">Fil nécessaire</div>
+          <div class="res-item-val">${stats.totalFil} m</div>
+        </div>
+        <div class="res-item">
+          <div class="res-item-label">Changements</div>
+          <div class="res-item-val">${stats.totalChangements} ×</div>
+        </div>
+        <div class="res-item">
+          <div class="res-item-label">Surface Brodée</div>
+          <div class="res-item-val">${logoData.tauxRemplissage} %</div>
+        </div>
+      </div>
+      
+      <table class="res-table">
+        <thead>
+          <tr>
+            <th>Projet</th>
+            <th>Pièces</th>
+            <th>Points</th>
+            <th>Temps</th>
+            <th>Fil</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${resultats.map(r=>`
+            <tr>
+              <td><strong>${r.nom}</strong></td>
+              <td>${r.nbPieces}</td>
+              <td>${(r.nbPointsTotal/1000).toFixed(1)}K</td>
+              <td>${r.tempsH}h${r.tempsM.toString().padStart(2,'0')}</td>
+              <td>${r.filMetres}m</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
     </div>
     
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-label">Total Points</div>
-        <div class="stat-value">${(stats.totalPoints/1000).toFixed(1)}<span class="stat-unit">K</span></div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Temps Broderie</div>
-        <div class="stat-value">${stats.totalHeures}h${stats.totalMin.toString().padStart(2,'0')}</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Fil Nécessaire</div>
-        <div class="stat-value">${stats.totalFil}<span class="stat-unit">m</span></div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Surface Brodée</div>
-        <div class="stat-value">${logoData.tauxRemplissage}<span class="stat-unit">%</span></div>
-      </div>
-    </div>
-    
-    <div class="projets-table">
-      <div class="table-header">
-        <div class="th">Projet</div>
-        <div class="th">Points</div>
-        <div class="th">Lots</div>
-        <div class="th">Temps Broderie</div>
-        <div class="th">Temps Total</div>
-        <div class="th">Fil (m)</div>
-      </div>
-      ${resultats.map(r=>`
-        <div class="table-row">
-          <div class="td-name">
-            <div class="td-dot" style="background:${COLORS[r.colorIdx]}"></div>
-            ${r.nom} (×${r.quantite})
+    <div class="projects-previews">
+      <div class="section-title" style="margin-top:40px;">Aperçu de chaque visuel</div>
+      ${resultats.map((r,idx)=>`
+        <div class="project-preview-card">
+          <div class="project-preview-header">
+            <div class="pdot"></div>
+            <h3>${r.nom}</h3>
+            <span class="project-preview-dims">${projets[idx].largeur}×${projets[idx].hauteur}mm • ×${r.nbPieces}</span>
           </div>
-          <div class="td">${(r.nbPointsTotal/1000).toFixed(1)}K</div>
-          <div class="td">${r.nbLots}</div>
-          <div class="td">${r.tempsBrodH}h${r.tempsBrodM.toString().padStart(2,'0')}</div>
-          <div class="td">${r.tempsTotalH}h${r.tempsTotalM.toString().padStart(2,'0')}</div>
-          <div class="td">${r.filMetres}m</div>
+          <div class="project-preview-body">
+            <canvas id="previewCanvas${idx}" class="project-canvas"></canvas>
+            <div class="project-preview-info">
+              ${(r.nbPointsTotal/1000).toFixed(1)}K points • 
+              ${r.tempsH}h${r.tempsM.toString().padStart(2,'0')} • 
+              ${r.filMetres}m fil
+            </div>
+          </div>
         </div>
       `).join('')}
     </div>
-    
-    <div class="canvas-container">
-      <div class="canvas-title">Aperçu Broderie</div>
-      <canvas id="previewCanvas"></canvas>
-      <div class="canvas-info">
-        📐 Logo adapté: ${stats.logoFinalW}×${stats.logoFinalH}mm (format ${stats.format}×${stats.format}mm) • 
-        Surface brodée réelle: ${logoData.tauxRemplissage}% du logo (${logoData.pixelsRemplis.toLocaleString()} pixels pleins) • 
-        Densité: ${stats.densite} pts/cm • 
-        Vitesse: ${stats.vitesse} pts/min • 
-        ${stats.nbCouleurs} couleur(s) • 
-        ${stats.nbTetes} tête(s)
-      </div>
-    </div>
   `;
   
+  document.getElementById('resultSection').innerHTML=html;
   drawPreview();
+  resultats.forEach((r,idx)=>{
+    drawProjectPreview(idx,projets[idx].largeur,projets[idx].hauteur);
+  });
 }
 
 // ── CANVAS PREVIEW ──
@@ -1116,181 +1119,104 @@ function drawPreview(){
   ctx.strokeRect(0,0,canvasSize,canvasSize);
 }
 
-// ── PDF EXPORT ──
-async function exportPDF(){
-  if(!lastResult){
-    alert('Calculez d\'abord la production');
-    return;
+function drawProjectPreview(idx, projetW, projetH) {
+  const canvas = document.getElementById(`previewCanvas${idx}`);
+  if (!canvas || !logoImage) return;
+
+  const ctx = canvas.getContext('2d');
+  const format = +document.getElementById('formatCasquette').value;
+  
+  // Configuration du style (identique à la fonction principale)
+  const scale = 1.5; 
+  const canvasSize = format * scale;
+  canvas.width = canvasSize;
+  canvas.height = canvasSize;
+
+  // 1. Fond "Papier"
+  ctx.fillStyle = '#fdfbf7';
+  ctx.fillRect(0, 0, canvasSize, canvasSize);
+
+  // 2. Grille légère
+  ctx.strokeStyle = '#f5f1e8';
+  ctx.lineWidth = 1;
+  const gridStep = 20 * scale; 
+  for (let i = gridStep; i < canvasSize; i += gridStep) {
+    ctx.beginPath();
+    ctx.moveTo(i, 0); ctx.lineTo(i, canvasSize); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0, i); ctx.lineTo(canvasSize, i); ctx.stroke();
   }
+
+  // 3. Calcul des dimensions du logo
+  const logoW = parseFloat(projetW) * scale;
+  const logoH = parseFloat(projetH) * scale;
+  const offsetX = (canvasSize - logoW) / 2;
+  const offsetY = (canvasSize - logoH) / 2;
+
+  // 4. Zone de placement (Rectangle pointillé vert)
+  ctx.fillStyle = 'rgba(45,109,104,0.05)';
+  ctx.fillRect(offsetX, offsetY, logoW, logoH);
+  ctx.strokeStyle = '#2d6d68';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([4, 4]);
+  ctx.strokeRect(offsetX, offsetY, logoW, logoH);
+  ctx.setLineDash([]);
+
+  // 5. Dessin du logo
+  ctx.drawImage(logoImage, offsetX, offsetY, logoW, logoH);
+
+  // 6. Effet "Points de broderie" (Alpha réduit pour la miniature)
+  ctx.globalAlpha = 0.12;
+  ctx.fillStyle = '#c85a3f';
+  const densite = +document.getElementById('densite').value || 50;
+  const gap = Math.max(4, Math.min(15, 600 / densite));
   
-  const btn=document.getElementById('pdf-btn');
-  btn.textContent='⏳ Génération...';
-  btn.style.opacity='0.6';
-  
-  const{jsPDF}=window.jspdf;
-  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-  const W=210,H=297,M=15;
-  
-  const{resultats,stats}=lastResult;
-  
-  // Couleurs
-  const C={
-    ink:[10,14,26],
-    cream:[245,241,232],
-    rust:[200,90,63],
-    teal:[45,109,104],
-    slate:[84,110,122],
-    gold:[212,165,116],
-  };
-  
-  // ── PAGE 1: RESUME ──
-  doc.setFillColor(253,251,247);
-  doc.rect(0,0,W,H,'F');
-  
-  // Header
-  doc.setFillColor(...C.rust);
-  doc.rect(0,0,W,12,'F');
-  doc.setTextColor(255,255,255);
-  doc.setFontSize(9);
-  doc.setFont('helvetica','bold');
-  doc.text('ATELIER BRODERIE — PROGRAMME DE PRODUCTION',M,7);
-  
-  // Titre
-  doc.setTextColor(...C.ink);
-  doc.setFontSize(24);
-  doc.setFont('helvetica','bold');
-  doc.text('Programme de Production',M,28);
-  
-  doc.setFontSize(9);
-  doc.setFont('helvetica','normal');
-  doc.setTextColor(...C.slate);
-  doc.text(new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}),M,36);
-  doc.text(`${projets.length} projet(s) • ${stats.totalPieces} pièce(s) • Format ${stats.format}×${stats.format}mm • Logo: ${logoData.name}`,M,42);
-  
-  // Ligne
-  doc.setDrawColor(...C.rust);
-  doc.setLineWidth(0.5);
-  doc.line(M,48,W-M,48);
-  
-  // Stats cards
-  const statCards=[
-    {l:'POINTS TOTAL',v:(stats.totalPoints/1000).toFixed(1)+'K'},
-    {l:'TEMPS BRODERIE',v:`${stats.totalHeures}h${stats.totalMin.toString().padStart(2,'0')}`},
-    {l:'FIL NÉCESSAIRE',v:stats.totalFil+' m'},
-    {l:'CHANGEMENTS',v:stats.totalChangements+' ×'},
-  ];
-  
-  const cW=43,cH=26,cY=56;
-  statCards.forEach((s,i)=>{
-    const cx=M+(i%2)*(cW+4);
-    const cy=cY+Math.floor(i/2)*(cH+4);
-    
-    doc.setFillStyle=255,255,255;
-    doc.setDrawColor(...C.rust);
-    doc.setLineWidth(0.4);
-    doc.roundedRect(cx,cy,cW,cH,2,2,'FD');
-    
-    // Barre couleur
-    const barC=i===0?C.rust:i===1?C.teal:i===2?C.gold:C.slate;
-    doc.setFillColor(...barC);
-    doc.rect(cx,cy,2,cH,'F');
-    
-    doc.setTextColor(...C.slate);
-    doc.setFontSize(6);
-    doc.setFont('helvetica','normal');
-    doc.text(s.l,cx+cW/2,cy+8,{align:'center'});
-    
-    doc.setTextColor(...C.ink);
-    doc.setFontSize(16);
-    doc.setFont('helvetica','bold');
-    doc.text(s.v,cx+cW/2,cy+19,{align:'center'});
-  });
-  
-  // Paramètres
-  const pY=118;
-  doc.setFillColor(255,255,255);
-  doc.setDrawColor(...C.teal);
-  doc.setLineWidth(0.4);
-  doc.roundedRect(M,pY,W-M*2,22,2,2,'FD');
-  
-  doc.setFillColor(...C.teal);
-  doc.rect(M,pY,2.5,22,'F');
-  
-  doc.setTextColor(...C.slate);
-  doc.setFontSize(6);
-  doc.setFont('helvetica','normal');
-  doc.text('VITESSE',M+6,pY+6);
-  doc.text('DENSITÉ',M+50,pY+6);
-  doc.text('COULEURS',M+95,pY+6);
-  doc.text('LOGO ADAPTÉ',M+135,pY+6);
-  
-  doc.setTextColor(...C.ink);
-  doc.setFontSize(14);
-  doc.setFont('helvetica','bold');
-  doc.text(`${stats.vitesse} pts/min`,M+6,pY+16);
-  doc.text(`${stats.densite} pts/cm`,M+50,pY+16);
-  doc.text(`${stats.nbCouleurs}`,M+95,pY+16);
-  doc.setFontSize(10);
-  doc.text(`${stats.logoFinalW}×${stats.logoFinalH}mm`,M+135,pY+16);
-  
-  // Table
-  const tY=148;
-  doc.setFillColor(...C.cream);
-  doc.setDrawColor(...C.rust);
-  doc.setLineWidth(0.3);
-  doc.rect(M,tY,W-M*2,8,'FD');
-  
-  doc.setTextColor(...C.slate);
-  doc.setFontSize(6.5);
-  doc.setFont('helvetica','bold');
-  const cols=[M+4,M+60,M+95,M+130,M+160];
-  ['PROJET','POINTS','TEMPS BROD.','TEMPS TOTAL','FIL'].forEach((h,i)=>doc.text(h,cols[i],tY+5.5));
-  
-  let rY=tY+8;
-  resultats.forEach((r,i)=>{
-    if(rY>H-25){
-      doc.addPage();
-      doc.setFillColor(253,251,247);
-      doc.rect(0,0,W,H,'F');
-      rY=M;
+  for (let x = offsetX + gap / 2; x < offsetX + logoW; x += gap) {
+    for (let y = offsetY + gap / 2; y < offsetY + logoH; y += gap) {
+      ctx.beginPath();
+      ctx.arc(x, y, 1, 0, Math.PI * 2);
+      ctx.fill();
     }
-    
-    doc.setFillColor(i%2===0?255:250,i%2===0?255:248,i%2===0?255:245);
-    doc.setDrawColor(232,220,200);
-    doc.setLineWidth(0.2);
-    doc.rect(M,rY,W-M*2,7,'FD');
-    
-    doc.setFillColor(...C.rust);
-    doc.circle(cols[0]+2,rY+3.5,1.5,'F');
-    
-    doc.setTextColor(...C.ink);
-    doc.setFontSize(7);
-    doc.setFont('helvetica','normal');
-    doc.text(r.nom,cols[0]+6,rY+4.8);
-    doc.text(`${(r.nbPointsTotal/1000).toFixed(1)}K`,cols[1],rY+4.8);
-    doc.text(`${r.tempsH}h${r.tempsM.toString().padStart(2,'0')}`,cols[2],rY+4.8);
-    doc.text(`${r.tempsTotalH}h${r.tempsTotalM.toString().padStart(2,'0')}`,cols[3],rY+4.8);
-    doc.text(`${r.filMetres}m`,cols[4],rY+4.8);
-    
-    rY+=7;
+  }
+  ctx.globalAlpha = 1;
+
+  // 7. Annotations (Texte plus petit pour la miniature)
+  ctx.fillStyle = '#546e7a';
+  ctx.font = 'bold 10px "JetBrains Mono", monospace';
+  ctx.textAlign = 'center';
+  
+  // Largeur
+  ctx.fillText(`${projetW}mm`, canvasSize / 2, offsetY - 5);
+  
+  // Hauteur (Verticale)
+  ctx.save();
+  ctx.translate(offsetX - 7, canvasSize / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText(`${projetH}mm`, 0, 0);
+  ctx.restore();
+
+  // 8. Bordure finale "Brique"
+  ctx.strokeStyle = '#c85a3f';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(0, 0, canvasSize, canvasSize);
+}
+
+// ── PDF EXPORT (simplifié pour l'exemple) ──
+async function exportPDF(){
+  if(!lastResult) return;
+  const {jsPDF} = window.jspdf;
+  const doc = new jsPDF();
+  doc.text("Programme de Production Broderie", 10, 10);
+  let y = 20;
+  lastResult.resultats.forEach(r => {
+    doc.text(`${r.nom}: ${r.logoW}x${r.logoH}mm - ${r.nbPieces} pcs`, 10, y);
+    y += 10;
   });
-  
-  // Footer
-  doc.setFillColor(...C.cream);
-  doc.rect(0,H-10,W,10,'F');
-  doc.setTextColor(...C.slate);
-  doc.setFontSize(7);
-  doc.text('Atelier Broderie — Programme de Production',M,H-4);
-  doc.text('Page 1',W-M,H-4,{align:'right'});
-  
-  doc.save('programme-broderie.pdf');
-  
-  btn.textContent='⬇ Export PDF';
-  btn.style.opacity='1';
+  doc.save("programme-broderie.pdf");
 }
 
 // ── INIT ──
-addProjet({nom:'Visuel #1',largeur:140,hauteur:140,quantite:1});
+addProjet({nom:'Visuel #1',largeur:80,hauteur:80,quantite:1, useRecommanded: false});
 </script>
 </body>
 </html>
