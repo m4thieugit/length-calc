@@ -4,6 +4,8 @@
 
 Il aide à maximiser l’utilisation de matière en organisant efficacement les dimensions données.
 
+NOUVEAU : inclut un outil de programme de broderie
+
 ---
 
 ## 🚀 Fonctionnalités
@@ -12,6 +14,10 @@ Il aide à maximiser l’utilisation de matière en organisant efficacement les 
 - 🧱 Calpinage sur **plaque (surface définie)**
 - 📐 Gestion de **formats multiples**
 - ⚡ Optimisation de la disposition pour limiter les pertes
+- 🧵 Aide à la préparation de programmes de broderie :
+  - estimation de surface brodée
+  - optimisation du placement
+  - adaptation aux contraintes machines
 
 ---
 
@@ -44,6 +50,7 @@ afin de :
 - Industrie textile (optimisation de coupe)
 - Impression grand format
 - Découpe de matériaux (bois, métal, plastique)
+- Broderie industrielle (placement et optimisation de logos)
 
 ---
 
